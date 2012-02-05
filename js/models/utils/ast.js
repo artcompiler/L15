@@ -9,10 +9,10 @@
    @author: Jeff Dyer
 */
 
-jQuery.extend ( KhanUtil, {
+jQuery.extend ( this, {
 
 
-	ASSERT: false,
+	ASSERT: true,
 
 	assert: function (val, str) {
 		if ( !this.ASSERT ) {
