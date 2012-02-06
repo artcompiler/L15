@@ -1,0 +1,21 @@
+<html>
+    <head>
+	<script src="js/models/utils/jquery.js"></script>
+	<script src="js/models/utils/underscore.js"></script>
+	<script src="js/models/utils/backbone.js"></script>
+	<script src="js/models/utils/ast.js"></script>
+	<script src="js/models/model.js"></script>
+	<script src="js/models/math-model.js"></script>
+	<script>
+	    var $m = new MathModel({op: '+', args: [1, 2]});
+	    //alert($m.eval({x: 10}));
+	    var $m = new MathModel("x^2+4x+10");
+	    //alert($m.eval({x: 10}));
+	</script>
+    </head>
+    <body>
+	<div class="question"></div>
+	<div class="anwswer"></div>
+	<div class="solution"></div>
+    </body>
+</html>
