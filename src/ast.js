@@ -1,13 +1,20 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
-   ASTs for Khan Exercises
-
-   @see http://artcompiler.org/articles/asts-for-khan-exercises.pdf
-
-   NOTE: this file is a work in progress and will be expanded as needed to support
-   syntax for new exercises.
-
-   @author: Jeff Dyer
-*/
+ * Copyright 2013 Art Compiler LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 jQuery.extend ( this, {
 
@@ -35,8 +42,6 @@ jQuery.extend ( this, {
 		var stringMap = { };
 		var nodeMap = { };
 
-		// KhanUtil.ast public interface
-
 		jQuery.extend ( this, {
 			fromLaTeX: fromLaTeX,			
 			toLaTeX: toLaTeX,
@@ -53,20 +58,20 @@ jQuery.extend ( this, {
 
 		function fromLaTeX(str, model) {
 			if (model===void 0) {
-				model = KhanUtil.MathModel.init();   // default model
+				model = MathModel.init();   // default model
 			}
 			return model.parse(str);
 		}
 
 		function toLaTeX(n, model) {
 			if (model===void 0) {
-				model = KhanUtil.MathModel.init();   // default model
+				model = MathModel.init();   // default model
 			}
-			return model.format(n, "large", KhanUtil.BLUE);
+			return model.format(n, "large", BLUE);
 		}
 
 		function eval(n) {
-			KhanUtil.assert(false);
+			assert(false);
 			return void 0;
 		}
 

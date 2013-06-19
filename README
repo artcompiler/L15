@@ -1,2 +1,15 @@
-The repository is hosted at http://github.com/artcompiler/exercises.
+L15 is wrtten in JavaScript. L15 has LaTex syntax and AST semantics. That is,
+L15 defines a translation between LaTex and ASTs and provides basic support
+for pooling and evaluating th ASTs.
+
+L15 is written by Jeff Dyer (jeffdyer@acm.org) of Art Compiler LLC.
+
+L15 is licensed under the Apache License, Version 2.0 available at
+http://www.apache.org/licenses/LICENSE-2.0
+
+L15 is hosted at http://github.com/artcompiler/L15.
+
+
+
+
 
