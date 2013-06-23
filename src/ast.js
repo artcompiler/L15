@@ -16,159 +16,228 @@
  * limitations under the License.
  */
 
-jQuery.extend ( this, {
+"use strict";
 
-  ASSERT: true,
+/*
+  This module implements th node factory for abstract syntax trees (AST).
 
-  assert: function (val, str) {
-    if ( !this.ASSERT ) {
-      return;
-    }
-    if ( str === void 0 ) {
-      str = "failed!";
-    }
-    if ( !val ) {
-      alert("assert: " + str);
-    }
-  },
+  Each node inherits an Ast instance as it prototype.
 
-  ast: new function () {
+  All Ast instances share the same node pool and therefore intern trees of
+  identical structure to the same node id.
 
-    var nodePool = [ "unused" ];  // nodePool[0] is reserved
+  Construct new nodes using the following forms:
+    ast.create("+").arg(10).arg(20);
+    ast.create("+", [10, 20]);
+    ast.create({op: "+", args: [10, 20]});
 
-    // maps for fast lookup of nodes
-    var numberMap = { };
-    var stringMap = { };
-    var nodeMap = { };
+  Node manipulation functions are chainable.
 
-    jQuery.extend ( this, {
-      fromLaTeX: fromLaTeX,
-      toLaTeX: toLaTeX,
-      eval: eval,
-      intern: intern,
-      node: node,
-      dump: dump,
-      dumpAll: dumpAll,
-    } );
+ */
 
-    return this;  // end control flow
+var Ast = (function () {
 
-    // private implementation
+  var DEBUG = true;
 
-    function fromLaTeX(str, model) {
-      if (model===void 0) {
-        model = MathModel.init();   // default model
-      }
-      return model.parse(str);
-    }
-
-    function toLaTeX(n, model) {
-      if (model===void 0) {
-        model = MathModel.init();   // default model
-      }
-      return model.format(n, "large", BLUE);
-    }
-
-    function eval(n) {
-      assert(false);
-      return void 0;
-    }
-
-    function intern(n) {
-      // nodify number and string literals
-      if (jQuery.type(n) === "number") {
-        var nid = numberMap[n];
-        if (nid === void 0) {
-          nodePool.push({op:"num", args: [n]});
-          nid = nodePool.length - 1;
-          numberMap[n] = nid;
+  var assert = !DEBUG
+    ? function () { }
+    : function (val, str) {
+        if ( str === void 0 ) {
+          str = "failed!";
         }
-      }
-      else if (jQuery.type(n) === "string") {
-        var nid = stringMap[n];
-        if (nid === void 0) {
-          nodePool.push({op:"str", args: [n]});
-          nid = nodePool.length - 1;
-          stringMap[n] = nid;
+        if ( !val ) {
+          alert("assert: " + str);
         }
-      }
-      else {
-        var op = n.op;
-        var count = n.args.length;
-        var args = "";
-        var args_nids = [ ];
-        for (var i=0; i < count; i++) {
-          args += args_nids[i] = intern(n.args[i]);
-        }
-        var key = op+count+args;
-        var nid = nodeMap[key];
-        if (nid === void 0) {
-          nodePool.push({
-            op: op,
-            args: args_nids,
-          });
-          nid = nodePool.length - 1 ;
-          nodeMap[key] = nid;
-        }
-      }
-      return nid;
-    }
+      };
 
-    function node(nid) {
-      var n = jQuery.extend(true, {}, nodePool[nid]);
-      // if literal, then unwrap.
-      switch (n.op) {
-      case "NUM":
-      case "STR":
-        n = n.args[0];
-        break;
-      default:
-        for (var i=0; i < n.args.length; i++) {
-          n.args[i] = node(n.args[i]);
+  // Pool of nodes. Shared between all Ast instances.
+  var nodePool = [ "unused" ];  // nodePool[0] is reserved
+
+  // Maps for fast lookup of nodes. Shared betwen all Ast instances.
+  var numberMap = { };
+  var stringMap = { };
+  var nodeMap = { };
+
+  function Ast() {
+  }
+
+  // Create a node for operation 'op'
+  Ast.prototype.create = function create(op, args) {
+    // Create a node that inherits from Ast
+    var node = Object.create(this);
+    if (typeof op === "string") {
+      node.op = op;
+      if (args instanceof Array) {
+        node.args = args;
+      } else {
+        node.args = [];
+      }
+    } else if (op !== null && typeof op === "object") {
+      var obj = op;
+      Object.keys(obj).forEach(function (v, i) {
+        node[v] = obj[v];
+      });
+    }
+    return node;
+  }
+
+  // Append node to this node's args.
+  Ast.prototype.arg = function arg(node) {
+    if (!isNode(this)) {
+      throw "Malformed node";
+    }
+    this.args.push(node);
+    return this;
+  }
+
+  // Get or set the Nth arg of this node.
+  Ast.prototype.argN = function argN(i, node) {
+    if (!isNode(this)) {
+      throw "Malformed node";
+    }
+    if (node === undefined) {
+      return this.args[i];
+    }
+    this.args[i] = node;
+    return this;
+  }
+
+  // Get or set the args of this node.
+  Ast.prototype.args = function args(args) {
+    if (!isNode(this)) {
+      throw "Malformed node";
+    }
+    if (args === undefined) {
+      return this.args;
+    }
+    this.args = args;
+    return this;
+  }
+
+  // Check if obj is a value node object [private]
+  Ast.prototype.isNode = isNode;
+
+  function isNode(obj) {
+    if (obj === undefined) {
+      obj = this;
+    }
+    return obj.op && obj.args;
+  }
+
+  // Intern an AST into the node pool and return its node id.
+  Ast.prototype.intern = function intern(node) {
+    if (this instanceof Ast &&
+        node === undefined &&
+        isNode(this)) {
+      // We have an Ast that look like a node
+      node = this;
+    }
+    if (typeof node === "number") {
+      var nid = numberMap[node];
+      if (nid === undefined) {
+        nodePool.push(node);
+        nid = nodePool.length - 1;
+        numberMap[node] = nid;
+      }
+    } else {
+      var op = node.op;
+      var count = node.args.length;
+      var args = "";
+      var args_nids = [ ];
+      for (var i=0; i < count; i++) {
+        args += args_nids[i] = intern(node.args[i]);
+      }
+      var key = op + count + args;
+      var nid = nodeMap[key];
+      if (nid === void 0) {
+        nodePool.push({
+          op: op,
+          args: args_nids,
+        });
+        nid = nodePool.length - 1 ;
+        nodeMap[key] = nid;
+      }
+    }
+    return nid;
+  };
+
+  // Get a node from the node pool.
+  Ast.prototype.node = function node(nid) {
+    var n = JSON.parse(JSON.stringify(nodePool[nid]));
+    var node = this.create(n);
+    // if literal, then unwrap.
+    switch (n.op) {
+    case "NUM":
+    case "STR":
+      n = n.args[0];
+      break;
+    default:
+      for (var i=0; i < n.args.length; i++) {
+        n.args[i] = node(n.args[i]);
+      }
+      break;
+    }
+    return n;
+  };
+
+  // Dump the contents of the node pool.
+  Ast.prototype.dumpAll = function dumpAll() {
+    var s = "";
+    var ast = this;
+    nodePool.forEach(function (n, i) {
+      s += "\n" + i + ": " + ast.dump(n);
+    });
+    return s;
+  };
+
+  // Dump the contents of a node.
+  Ast.prototype.dump = function dump(n) {
+    if (typeof n === "string") {
+      var s = "\""+n+"\"";
+    } else if (typeof n === "number") {
+      var s = n;
+    } else {
+      var s = "{ op: \"" + n.op + "\", args: [ ";
+      for (var i=0; i < n.args.length; i++) {
+        if (i > 0) {
+          s += " , ";
         }
-        break;
+        s += dump(n.args[i]);
       }
-      return n;
+      s += " ] }";
     }
+    return s;
+  };
 
-    function dumpAll() {
-      var s = "";
-      for (var i=1; i < nodePool.length; i++) {
-        var n = nodePool[i];
-        s = s + "<p>" + i+": "+dump(n) + "</p>";
-      }
-      return s;
-    }
+  // Self test
+  Ast.test = function test() {
+    (function () {
+      var ast = new Ast();
+      var node1 = {op: "+", args: [10, 20]};
+      var node2 = {op: "+", args: [10, 30]};
+      var node3 = {op: "NUM", args: [10]};
+      var node4 = ast.create("+").arg(10).arg(30);
+      var node5 = ast.create("+", [10, 20]);
+      var node6 = ast.create({op: "+", args: [10, 20]});
+      var nid1 = ast.intern(node1);
+      var nid2 = ast.intern(node2);
+      var nid3 = ast.intern(node3);
+      var nid4 = node4.intern();
+      var nid5 = node5.intern();
+      var nid6 = node6.intern();
+      var result = nid2 === nid4 ? "PASS" : "FAIL";
+      print(result + ": " + "nid2 === nid4");
+      var result = nid1 === nid5 ? "PASS" : "FAIL";
+      print(result + ": " + "nid1 === nid5");
+      var result = nid5 === nid6 ? "PASS" : "FAIL";
+      print(result + ": " + "nid5 === nid6");
+      print(ast.dumpAll());
+    })();
+  }
 
-    function dump(n) {
+  Ast.test();
 
-      if (jQuery.type(n) === "object") {
-        switch (n.op) {
-        case "num":
-          var s = n.args[0];
-          break;
-        case "str":
-          var s = "\""+n.args[0]+"\"";
-          break;
-        default:
-          var s = "{ op: \"" + n.op + "\", args: [ ";
-          for (var i=0; i < n.args.length; i++) {
-            if (i > 0) {
-              s += " , ";
-            }
-            s += dump(n.args[i]);
-          }
-          s += " ] }";
-          break;
-        }
-      }
-      else if (jQuery.type(n)==="string") {
-        var s = "\""+n+"\"";
-      }
-      else {
-        var s = n;
-      }
-      return s;
-    }
-  } (),
-});
+  return Ast;
+
+})();
+

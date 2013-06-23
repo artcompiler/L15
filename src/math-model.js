@@ -957,4 +957,28 @@
 
     }
   }
+
+
+  // Parse LaTex into an AST.
+  Ast.prototype.fromLaTex = function fromLaTeX(str, model) {
+    if (model===void 0) {
+      model = MathModel.init();   // default model
+    }
+    return model.parse(str);
+  };
+
+  // Render an AST into LaTex.
+  Ast.prototype.toLaTex = function toLaTeX(n, model) {
+    if (model===void 0) {
+      model = MathModel.init();   // default model
+    }
+    return model.format(n, "large", BLUE);
+  };
+
+  // Evaluate a node using the registered model.
+  Ast.prototype.eval = function eval(n) {
+    assert(false);
+    return void 0;
+  };
+
 })(Model);
