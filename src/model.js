@@ -17,40 +17,83 @@
  */
 
 /*
-  This module defines an object model for academic exercises. A model operates
-  on ASTs. Functions are provided for parsing and rendering to and from LaTex
-  source.
+  This module defines an object model for evaluating and comparing LaTex
+  strings. The primary data structure is the Model class. Instances of the
+  Model class contain an AST (Ast instance) and zero or more plugins that
+  provide functions for evaluating, transforming and comparing models.
 
-    var model = new Model(mathPlugin);
-    var actual = model.parse(response);
-    var expected = model.parse(key);
-    model.equivalentSymbolic(actual, expected);
-    expected.equivalentSymbolic(actual);
+  Basic Terms
 
-    node.css("color", blue);
-    node.css({color: "blue"});
+  Node - a node is a raw JavaScript object that consists of an 'op' property
+  that is a string indicating the node type, an 'args' property that is an array
+  that holds the operands of the operation, and any other "attribute" properties
+  used by plugins to elaborate the mean meaning of the node.
 
-    {op: "+", args: [1, 2], style: {color: "red", size: "14"}}
+  AST - an AST is an a Node that is an instance of the Ast class. The Ast class
+  provides methods for constructing and managing nodes.
 
-  Model methods
+  Model - a model is a Node that is an instance of the Model class, which
+  inherits from the Ast class. The model class adds methods for creating nodes
+  from LaTex strings and rendering them to LaTex strings. Model values are
+  configured by Model plugins that implement operations for evaluating,
+  transforming and comparing nodes.
 
-    parse()
-    render()
-    find()
-    style()
+  Overview
 
-    ast.create
+  Every model object is also a factory for other model objects that share
+  the same set of plugins.
+
+    var model = new Model;
+    model.registerPlugin(myPlugin);
+    var expected = model.create("1 + 2");
+    var actual = model.create(response);
+    model.myPluginFn(expected, actual);
+    expected.myPluginFn(actual);
+
+  When all models in a particular JavaScript sandbox (global scope) use the same
+  plugins, those plugins can be registered with the Model class as default
+  plugins, as follows:
+
+    Model.registerDefaultPlugin(myPlugin);
+    var expected = Model.create("(x + 2)(x - 3)");
+    expected.isEquivalent(response);
 
 */
+
+"use strict";
 
 load("ast.js");
 
 var Model = (function (target) {
 
+  function error(str) {
+    print("error: " + str);
+  }
+
   function Model() {
   }
 
-  var Mp = Model.prototype;
+  var Mp = Model.prototype = new Ast();
+
+  // Create a model from a node
+  Model.create = Mp.create = function create(node) {
+    if (!(this instanceof Model)) {
+      return new Model().create(node);
+    }
+    // Create a node that inherits from Ast
+    var model = Object.create(this);
+    if (typeof node === "string") {
+      // Got a string, so parse it into a node.
+      node = parse(node).expr();
+    } else {
+      // Make a deep copy of the node.
+      node = JSON.parse(JSON.stringify(node));
+    }
+    Object.keys(node).forEach(function (v, i) {
+        model[v] = node[v];
+    });
+    return model;
+  };
 
   // Patch Model with plugin functions. If multiple plugins are registered
   // and a name collision occurs, the last one registered wins.
@@ -58,64 +101,17 @@ var Model = (function (target) {
     plugin.keys().forEach(function (n) {
       Mp[n] = plugin[n];
     });
-  }
+  };
 
   // Create a Model node from LaTex source.
   Mp.fromLaTex = function fromLaTex(src) {
-    assert(typeof str === "string");
-    // Create a node that inherits from Model.
-    var node = Object.create(this);
-    // Initialize the node from the src string.
-    node.parse(str);
-    return node;
+    assert(typeof src === "string", "Model.prototype.fromLaTex");
+    return this.create(src);
   }
 
   // Render LaTex from the model node.
-  Mp.toLaTex = function toLaTex() {
-    var node = this;
-    return node.format();
-  }
-
-  // Style an AST node.
-  Mp.css = function css(prop, val) {
-    var n = this.node;
-    if (!n.style) {
-      n.style = {}
-    }
-    
-    if (!val) {
-      if (jQuery.type(prop) === "object") {
-        jQuery.extend(n.style, prop);
-        return this;
-      }
-      else {
-        return n.style[prop];
-      }
-    }
-    else {
-      assert(typeof prop === "string", "Model.css: invalid argument");
-      n.style[prop] = val;
-      return this;
-    }
-  }
-
-  // Select an AST node.
-  Mp.find = function find(selector) {
-    var n = this.node;
-    var a = Model({op: "list", args: []});
-    if (n===void 0) {
-      return a;
-    }
-    if (select(selector, n)) {
-      a.append(n);
-    }
-    jQuery.each(n.args, function (index, n) {
-      if (select(selector, n)) {
-        a.append(n);
-      }
-      a.append(find.call(n, selector));
-    });
-    return a;
+  Mp.toLaTex = function toLaTex(node) {
+    return render(node);
   }
 
   var isModel = Mp.isModel = function isModel(node) {
@@ -187,45 +183,39 @@ var Model = (function (target) {
   OpToLaTeX[OpStr.LN] = "\\ln";
   OpToLaTeX[OpStr.COMMA] = ",";
 
-  // format an AST
-  var format = function format(n, color, textSize) {
-    if (textSize===void 0) {
-      textSize = "normalsize";
-    }
-    if (color===void 0) {
-      color = "#000";  // black is the default
-    }
-    var text;
-    if (jQuery.type(n)==="string") {
+  // Render an AST to LaTex
+  var render = function render(n) {
+    var text = "";
+    if (typeof n === "string") {
       n = parse(n);
     }
-    if (jQuery.type(n)==="number") {
-      text = "\\color{"+color+"}{"+n+"}";
+    if (typeof n === "number") {
+      text = n;
     }
-    else if (jQuery.type(n)==="object") {
-      // format sub-expressions
+    else if (typeof n === "object") {
+      // render sub-expressions
       var args = [];
       for (var i = 0; i < n.args.length; i++) {
-        args[i] = format(n.args[i], color, textSize);
+        args[i] = render(n.args[i]);
       }
-      // format operator
+      // render operator
       switch (n.op) {
       case OpStr.VAR:
       case OpStr.CST:
-        text = "\\color{"+color+"}{"+n.args[0]+"}";
+        text = n.args[0];
         break;
       case OpStr.SUB:
         if (n.args.length===1) {
-          text = "\\color{#000}{"+ OpToLaTeX[n.op] + "} " + args[0];
+          text = OpToLaTeX[n.op] + " " + args[0];
         }
         else {
-          text = args[0] + " \\color{#000}{" + OpToLaTeX[n.op] + "} " + args[1];
+          text = args[0] + " " + OpToLaTeX[n.op] + " " + args[1];
         }
         break;
       case OpStr.DIV:
       case OpStr.PM:
       case OpStr.EQL:
-        text = args[0] + " \\color{#000}{" + OpToLaTeX[n.op] + "} " + args[1];
+        text = args[0] + " " + OpToLaTeX[n.op] + " " + args[1];
         break;
       case OpStr.POW:
         // if subexpr is lower precedence, wrap in parens
@@ -235,7 +225,7 @@ var Model = (function (target) {
           if (lhs.op===OpStr.ADD || lhs.op===OpStr.SUB ||
             lhs.op===OpStr.MUL || lhs.op===OpStr.DIV ||
             lhs.op===OpStr.SQRT) {
-            args[0] = "\\color{#000}{(} " + args[0] + "\\color{#000}{)} ";
+            args[0] = " (" + args[0] + ") ";
           }
         }
         text = "{" + args[0] + "^{" + args[1] + "}}";
@@ -247,18 +237,18 @@ var Model = (function (target) {
       case OpStr.COT:
       case OpStr.CSC:
       case OpStr.LN:
-        text = "\\color{"+"#000"+"}{"+ OpToLaTeX[n.op] + "{" + args[0] + "}}";
+        text = "{"+ OpToLaTeX[n.op] + "{" + args[0] + "}}";
         break;
       case OpStr.FRAC:
-        text = "\\color{#000}{\\dfrac{" + args[0] + "}{" + args[1] + "}}";
+        text = "\\dfrac{" + args[0] + "}{" + args[1] + "}";
         break;
       case OpStr.SQRT:
         switch (args.length) {
         case 1:
-          text = "\\color{" + "#000" + "}{\\sqrt{" + args[0] + "}}";
+          text = "\\sqrt{" + args[0] + "}";
           break;
         case 2:
-          text = "\\color{" + "#000" + "}{\\sqrt[" + args[0] + "]{" + args[1] + "}}";
+          text = "\\sqrt[" + args[0] + "]{" + args[1] + "}";
           break;
         }
         break;
@@ -266,13 +256,13 @@ var Model = (function (target) {
         // if subexpr is lower precedence, wrap in parens
         var prevTerm;
         text = "";
-        jQuery.each(n.args, function (index, term) {
+        n.args.forEach(function (term, index) {
           if (term.args && (term.args.length >= 2)) {
             if (term.op===OpStr.ADD || term.op===OpStr.SUB) {
-              args[index] = "\\color{#000}{(} " + args[index] + "\\color{#000}{)}";
+              args[index] = "(" + args[index] + ")";
             }
-            if (index !== 0 && jQuery.type(term)==="number") {
-              text += "\\color{#000}{" + OpToLaTeX[n.op] + "} ";
+            if (index !== 0 && typeof term === "number") {
+              text += OpToLaTeX[n.op] + " ";
             }
             text += args[index];
           }
@@ -281,12 +271,12 @@ var Model = (function (target) {
           else if (term.op===OpStr.PAREN ||
                term.op===OpStr.VAR ||
                term.op===OpStr.CST ||
-               jQuery.type(prevTerm)==="number" && jQuery.type(term)!=="number") {
+               typeof prevTerm === "number" && typeof term !== "number") {
             text += args[index];
           }
           else {
             if (index !== 0) {
-              text += " \\color{#000}{" + OpToLaTeX[n.op] + "} ";
+              text += " " + OpToLaTeX[n.op] + " ";
             }
             text += args[index];
           }
@@ -295,12 +285,12 @@ var Model = (function (target) {
         break;
       case OpStr.ADD:
       case OpStr.COMMA:
-        jQuery.each(args, function (index, value) {
+        args.forEach(function (value, index) {
           if (index===0) {
             text = value;
           }
           else {
-            text = text + " \\color{#000}{"+ OpToLaTeX[n.op] + "} " + value;
+            text = text + " "+ OpToLaTeX[n.op] + " " + value;
           }
         });
         break;
@@ -373,7 +363,6 @@ var Model = (function (target) {
       ABS: "abs",
       PAREN: "()",
       HIGHLIGHT: "hi",
-      EQL: "=",
     };
 
     // Define mapping from token to operator
@@ -435,7 +424,7 @@ var Model = (function (target) {
       var tk = hd();
       if (tk !== tc) {
         assert(false, "Expecting " + tc + " found " + tk);
-        jQuery.error("syntax error");
+        error("syntax error");
       }
       next();
     }
@@ -689,6 +678,11 @@ var Model = (function (target) {
       lexemeToToken["\\csc"]   = TK_CSC;
       lexemeToToken["\\ln"]   = TK_LN;
 
+      return {
+        start : start ,
+        lexeme : function () { return lexeme } ,
+      }
+
       function start () {
         var c;
         lexeme = "";
@@ -765,7 +759,31 @@ var Model = (function (target) {
         }
         return tk;
       }
-
     }
+
+    return {
+      expr : expr
+    };
   }
+
+  // Self test
+  Model.test = function test() {
+    print("\nModel self testing");
+    (function () {
+      var model = new Model();
+      var node = model.fromLaTex("10 + 20");
+      var str = model.toLaTex(node);
+      var result = str === "10 + 20" ? "PASS" : "FAIL";
+      print(result + ": " + "fromLaTex, toLaTex");
+      var nid1 = Model.create("10 + 20").intern();
+      var nid2 = Model.create({op: "+", args: [10, 20]}).intern();
+      var result = nid1 === nid2 ? "PASS" : "FAIL";
+      print(result + ": " + "Model.create()");
+      print(model.dumpAll());
+    })();
+  }
+
+  Model.test();
+
+  return Model;
 })();

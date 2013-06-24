@@ -35,20 +35,21 @@
 
  */
 
+var DEBUG = true;
+
+var assert = !DEBUG
+  ? function () { }
+  : function (val, str) {
+      if ( str === void 0 ) {
+        str = "failed!";
+      }
+      if ( !val ) {
+        throw("assert: " + str);
+      }
+    };
+
+
 var Ast = (function () {
-
-  var DEBUG = true;
-
-  var assert = !DEBUG
-    ? function () { }
-    : function (val, str) {
-        if ( str === void 0 ) {
-          str = "failed!";
-        }
-        if ( !val ) {
-          alert("assert: " + str);
-        }
-      };
 
   // Pool of nodes. Shared between all Ast instances.
   var nodePool = [ "unused" ];  // nodePool[0] is reserved
@@ -212,6 +213,7 @@ var Ast = (function () {
   // Self test
   Ast.test = function test() {
     (function () {
+      print("Ast self testing");
       var ast = new Ast();
       var node1 = {op: "+", args: [10, 20]};
       var node2 = {op: "+", args: [10, 30]};
