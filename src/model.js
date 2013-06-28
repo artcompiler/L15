@@ -43,20 +43,16 @@
   Every model object is also a factory for other model objects that share
   the same set of plugins.
 
+    Model.fn.isEquivalent; // register plugin function
     var model = new Model;
-    model.registerPlugin(myPlugin);
     var expected = model.create("1 + 2");
     var actual = model.create(response);
-    model.myPluginFn(expected, actual);
-    expected.myPluginFn(actual);
+    model.isEquivalent(expected, actual);
+    expected.isEquivalent(actual);
 
   When all models in a particular JavaScript sandbox (global scope) use the same
   plugins, those plugins can be registered with the Model class as default
   plugins, as follows:
-
-    Model.registerDefaultPlugin(myPlugin);
-    var expected = Model.create("(x + 2)(x - 3)");
-    expected.isEquivalent(response);
 
 */
 
@@ -67,15 +63,17 @@ load("ast.js");
 var Model = (function (target) {
 
   function error(str) {
-    print("error: " + str);
+    trace("error: " + str);
   }
 
   function Model() {
   }
 
+  Model.fn = {};
+
   var Mp = Model.prototype = new Ast();
 
-  // Create a model from a node
+  // Create a model from a node object or expression string
   Model.create = Mp.create = function create(node) {
     if (!(this instanceof Model)) {
       return new Model().create(node);
@@ -83,59 +81,46 @@ var Model = (function (target) {
     // Create a node that inherits from Ast
     var model = Object.create(this);
     if (typeof node === "string") {
-      // Got a string, so parse it into a node.
+      // Got a string, so parse it into a node
       node = parse(node).expr();
     } else {
-      // Make a deep copy of the node.
+      // Make a deep copy of the node
       node = JSON.parse(JSON.stringify(node));
     }
+    // Add missing plugin functions to the Model prototype
+    Object.keys(Model.fn).forEach(function (v, i) {
+      if (!Mp.hasOwnProperty(v)) {
+        Mp[v] = function () {
+          var fn = Model.fn[v];
+          var args = arguments;
+          if (args.length > 1 &&
+              args[1] instanceof Model) {
+            return fn.apply(args[0], Array.prototype.slice.call(args, 1));
+          } else {
+            return fn.apply(this, args);
+          }
+        }
+      }
+    });
+    // Now copy the node's properties into the model object
     Object.keys(node).forEach(function (v, i) {
         model[v] = node[v];
     });
     return model;
   };
 
-  // Patch Model with plugin functions. If multiple plugins are registered
-  // and a name collision occurs, the last one registered wins.
-  Mp.registerPlugin = function registerPlugin(plugin) {
-    plugin.keys().forEach(function (n) {
-      Mp[n] = plugin[n];
-    });
-  };
-
   // Create a Model node from LaTex source.
-  Mp.fromLaTex = function fromLaTex(src) {
+  Model.fromLaTex = Mp.fromLaTex = function fromLaTex(src) {
     assert(typeof src === "string", "Model.prototype.fromLaTex");
+    if (!this) {
+      return Model.create(src);
+    }
     return this.create(src);
   }
 
   // Render LaTex from the model node.
   Mp.toLaTex = function toLaTex(node) {
     return render(node);
-  }
-
-  var isModel = Mp.isModel = function isModel(node) {
-    return assert(false, "Not implemented");
-  }
-  
-  var isEqual = Mp.isEqual = function isEqual(n1, n2) {
-    var nid1 = ast.intern(n1);
-    var nid2 = ast.intern(n2);
-    if (nid1===nid2) {
-      return true;
-    }
-    if (n1.op===n2.op && n1.args.length===n2.args.length) {
-      if (n1.args.length===2) {
-        var n1arg0 = ast.intern(n1.args[0]);
-        var n1arg1 = ast.intern(n1.args[1]);
-        var n2arg0 = ast.intern(n2.args[0]);
-        var n2arg1 = ast.intern(n2.args[1]);
-        if (n1arg0===n2arg1 && n1arg1===n2arg0) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   var OpStr = {
@@ -766,24 +751,27 @@ var Model = (function (target) {
     };
   }
 
-  // Self test
-  Model.test = function test() {
-    print("\nModel self testing");
+  // Self tests
+
+  function test() {
+    trace("\nModel self testing");
     (function () {
       var model = new Model();
       var node = model.fromLaTex("10 + 20");
       var str = model.toLaTex(node);
       var result = str === "10 + 20" ? "PASS" : "FAIL";
-      print(result + ": " + "fromLaTex, toLaTex");
+      trace(result + ": " + "fromLaTex, toLaTex");
       var nid1 = Model.create("10 + 20").intern();
       var nid2 = Model.create({op: "+", args: [10, 20]}).intern();
       var result = nid1 === nid2 ? "PASS" : "FAIL";
-      print(result + ": " + "Model.create()");
-      print(model.dumpAll());
+      trace(result + ": " + "Model.create()");
+      trace(model.dumpAll());
     })();
   }
 
-  Model.test();
+  if (global.DEBUG) {
+    test();
+  }
 
   return Model;
 })();

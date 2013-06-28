@@ -48,6 +48,17 @@ var assert = !DEBUG
       }
     };
 
+var global = this;
+
+var trace = function trace(str) {
+  if (global.console && global.console.log) {
+    console.log(str);
+  } else if (global.print) {
+    print(str);
+  } else {
+    throw "No trace function defined!";
+  }
+}
 
 var Ast = (function () {
 
@@ -210,10 +221,10 @@ var Ast = (function () {
     return s;
   };
 
-  // Self test
-  Ast.test = function test() {
+  // Self tests
+  function test() {
     (function () {
-      print("Ast self testing");
+      trace("Ast self testing");
       var ast = new Ast();
       var node1 = {op: "+", args: [10, 20]};
       var node2 = {op: "+", args: [10, 30]};
@@ -228,16 +239,18 @@ var Ast = (function () {
       var nid5 = node5.intern();
       var nid6 = node6.intern();
       var result = nid2 === nid4 ? "PASS" : "FAIL";
-      print(result + ": " + "nid2 === nid4");
+      trace(result + ": " + "nid2 === nid4");
       var result = nid1 === nid5 ? "PASS" : "FAIL";
-      print(result + ": " + "nid1 === nid5");
+      trace(result + ": " + "nid1 === nid5");
       var result = nid5 === nid6 ? "PASS" : "FAIL";
-      print(result + ": " + "nid5 === nid6");
-      print(ast.dumpAll());
+      trace(result + ": " + "nid5 === nid6");
+      trace(ast.dumpAll());
     })();
   }
 
-  Ast.test();
+  if (global.DEBUG) {
+    test();
+  }
 
   return Ast;
 
