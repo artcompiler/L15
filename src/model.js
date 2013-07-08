@@ -172,12 +172,10 @@ var Model = (function (target) {
   var render = function render(n) {
     var text = "";
     if (typeof n === "string") {
-      n = parse(n);
-    }
-    if (typeof n === "number") {
       text = n;
-    }
-    else if (typeof n === "object") {
+    } else if (typeof n === "number") {
+      text = n;
+    } else if (typeof n === "object") {
       // render sub-expressions
       var args = [];
       for (var i = 0; i < n.args.length; i++) {
@@ -428,6 +426,7 @@ var Model = (function (target) {
       var op;
       switch ((t=hd())) {
       case 'A'.charCodeAt(0):
+      case TK_VAR:
         e = {op: "var", args: [lexeme()]};
         next();
         break;
@@ -632,7 +631,7 @@ var Model = (function (target) {
 
     }
 
-    function commaExpr ( ) {
+    function commaExpr( ) {
       var n = equalExpr();
       return n;
     }
@@ -760,14 +759,29 @@ var Model = (function (target) {
       var node = model.fromLaTex("10 + 20");
       var str = model.toLaTex(node);
       var result = str === "10 + 20" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex");
+      trace(result + ": " + "fromLaTex, toLaTex: " + str);
       var nid1 = Model.create("10 + 20").intern();
       var nid2 = Model.create({op: "+", args: [10, 20]}).intern();
       var result = nid1 === nid2 ? "PASS" : "FAIL";
       trace(result + ": " + "Model.create()");
+      var node = Model.create("e^2");
+      var str = model.toLaTex(node);
+      var result = str === "{e^{2}}" ? "PASS" : "FAIL";
+      trace(result + ": " + "fromLaTex, toLaTex: " + str);
+      var node = Model.create("(x+2)(x-3)");
+      var str = model.toLaTex(node);
+      var result = str === "(x + 2)(x - 3)" ? "PASS" : "FAIL";
+      trace(result + ": " + "fromLaTex, toLaTex: " + str);
+      var node = Model.create("x^2+2x-1");
+      var str = model.toLaTex(node);
+      var result = str === "(x + 2)(x - 3)" ? "PASS" : "FAIL";
+      trace(result + ": " + "fromLaTex, toLaTex: " + str);
+
       trace(model.dumpAll());
     })();
   }
+
+
 
   if (global.DEBUG) {
     test();

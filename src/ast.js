@@ -151,6 +151,13 @@ var Ast = (function () {
         nid = nodePool.length - 1;
         numberMap[node] = nid;
       }
+    } else if (typeof node === "string") {
+      var nid = stringMap[node];
+      if (nid === undefined) {
+        nodePool.push(node);
+        nid = nodePool.length - 1;
+        stringMap[node] = nid;
+      }
     } else {
       var op = node.op;
       var count = node.args.length;
