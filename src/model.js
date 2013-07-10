@@ -58,7 +58,7 @@
 
 "use strict";
 
-load("ast.js");
+// require("ast.js");
 
 var Model = (function (target) {
 
@@ -92,11 +92,14 @@ var Model = (function (target) {
       if (!Mp.hasOwnProperty(v)) {
         Mp[v] = function () {
           var fn = Model.fn[v];
-          var args = arguments;
-          if (args.length > 1 &&
-              args[1] instanceof Model) {
-            return fn.apply(args[0], Array.prototype.slice.call(args, 1));
+          if (arguments.length > 1 &&
+              arguments[1] instanceof Model) {
+            return fn.apply(this, arguments);
           } else {
+            var args = [this];
+            for (var i = 0; i < arguments.length; i++) {
+              args.push(arguments[i]);
+            }
             return fn.apply(this, args);
           }
         }
