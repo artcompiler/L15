@@ -138,12 +138,14 @@ var Ast = (function () {
 
   // Intern an AST into the node pool and return its node id.
   Ast.prototype.intern = function intern(node) {
+    //trace("Ast.intern() node=" + JSON.stringify(node));
     if (this instanceof Ast &&
         node === undefined &&
         isNode(this)) {
       // We have an Ast that look like a node
       node = this;
     }
+    // Intern primitive values and construct node for them.
     if (typeof node === "number") {
       var nid = numberMap[node];
       if (nid === undefined) {
@@ -151,6 +153,7 @@ var Ast = (function () {
         nid = nodePool.length - 1;
         numberMap[node] = nid;
       }
+      node = {op: "num", args: [nid]};
     } else if (typeof node === "string") {
       var nid = stringMap[node];
       if (nid === undefined) {
@@ -158,24 +161,29 @@ var Ast = (function () {
         nid = nodePool.length - 1;
         stringMap[node] = nid;
       }
-    } else {
-      var op = node.op;
-      var count = node.args.length;
-      var args = "";
-      var args_nids = [ ];
-      for (var i=0; i < count; i++) {
+      node = {op: "str", args: [nid]};
+    }
+    assert(typeof node === "object", "node not an object");
+    var op = node.op;
+    var count = node.args.length;
+    var args = "";
+    var args_nids = [ ];
+    for (var i=0; i < count; i++) {
+      if (node.op === "num" || node.op === "str") {
+        args += args_nids[i] = node.args[i];
+      } else {
         args += args_nids[i] = intern(node.args[i]);
       }
-      var key = op + count + args;
-      var nid = nodeMap[key];
-      if (nid === void 0) {
-        nodePool.push({
-          op: op,
-          args: args_nids,
-        });
-        nid = nodePool.length - 1 ;
-        nodeMap[key] = nid;
-      }
+    }
+    var key = op + count + args;
+    var nid = nodeMap[key];
+    if (nid === void 0) {
+      nodePool.push({
+        op: op,
+        args: args_nids,
+      });
+      nid = nodePool.length - 1 ;
+      nodeMap[key] = nid;
     }
     return nid;
   };
@@ -186,8 +194,8 @@ var Ast = (function () {
     var node = this.create(n);
     // if literal, then unwrap.
     switch (n.op) {
-    case "NUM":
-    case "STR":
+    case "num":
+    case "str":
       n = n.args[0];
       break;
     default:
@@ -235,7 +243,7 @@ var Ast = (function () {
       var ast = new Ast();
       var node1 = {op: "+", args: [10, 20]};
       var node2 = {op: "+", args: [10, 30]};
-      var node3 = {op: "NUM", args: [10]};
+      var node3 = {op: "num", args: [10]};
       var node4 = ast.create("+").arg(10).arg(30);
       var node5 = ast.create("+", [10, 20]);
       var node6 = ast.create({op: "+", args: [10, 20]});
