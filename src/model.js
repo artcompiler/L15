@@ -440,7 +440,7 @@ var Model = (function (target) {
         next();
         break;
       case TK_NUM:
-        e = {op: "num", args: [+lexeme()]};
+        e = {op: "num", args: [lexeme()]};
         next();
         break;
       case TK_LEFTPAREN:

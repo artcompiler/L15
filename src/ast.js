@@ -66,11 +66,18 @@ var Ast = (function () {
   var nodePool = [ "unused" ];  // nodePool[0] is reserved
 
   // Maps for fast lookup of nodes. Shared betwen all Ast instances.
-  var numberMap = { };
-  var stringMap = { };
-  var nodeMap = { };
+  var numberMap = {};
+  var stringMap = {};
+  var nodeMap = {};
 
   function Ast() {
+  }
+
+  Ast.clearPool = function () {
+    nodePool = ["unused"];
+    numberMap = {};
+    stringMap = {};
+    nodeMap = {};
   }
 
   // Create a node for operation 'op'
@@ -138,30 +145,17 @@ var Ast = (function () {
 
   // Intern an AST into the node pool and return its node id.
   Ast.prototype.intern = function intern(node) {
-    //trace("Ast.intern() node=" + JSON.stringify(node));
     if (this instanceof Ast &&
         node === undefined &&
         isNode(this)) {
       // We have an Ast that look like a node
       node = this;
     }
-    // Intern primitive values and construct node for them.
+    // Intern primitive values and construct nodes for them.
     if (typeof node === "number") {
-      var nid = numberMap[node];
-      if (nid === undefined) {
-        nodePool.push(node);
-        nid = nodePool.length - 1;
-        numberMap[node] = nid;
-      }
-      node = {op: "num", args: [nid]};
+      node = {op: "num", args: [node]};
     } else if (typeof node === "string") {
-      var nid = stringMap[node];
-      if (nid === undefined) {
-        nodePool.push(node);
-        nid = nodePool.length - 1;
-        stringMap[node] = nid;
-      }
-      node = {op: "str", args: [nid]};
+      node = {op: "str", args: [node]};
     }
     assert(typeof node === "object", "node not an object");
     var op = node.op;
@@ -211,6 +205,7 @@ var Ast = (function () {
   Ast.prototype.dumpAll = function dumpAll() {
     var s = "";
     var ast = this;
+    
     nodePool.forEach(function (n, i) {
       s += "\n" + i + ": " + ast.dump(n);
     });
