@@ -152,6 +152,10 @@ var Model = (function (target) {
     PAREN: "()",
     HIGHLIGHT: "hi",
   };
+
+  Object.keys(OpStr).forEach(function (v, i) {
+    Model[v] = OpStr[v];
+  });
     
   var OpToLaTeX = {};
   OpToLaTeX[OpStr.ADD] = "+";
@@ -921,7 +925,7 @@ var Model = (function (target) {
 //      var result = str === "\\dfrac{1}{2}" ? "PASS" : "FAIL";
 //      trace(result + ": " + "fromLaTex, toLaTex: " + str);
 
-      trace(model.dumpAll());
+//      trace(model.dumpAll());
     })();
   }
 
