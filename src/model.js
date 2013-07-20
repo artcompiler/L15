@@ -585,11 +585,9 @@ var Model = (function (target) {
     function isNeg(n) {
       if (typeof n === "number") {
         return n < 0;
-      }
-      else if (n.args.length===1) {
+      } else if (n.args.length===1) {
         return n.op===OpStr.SUB && n.args[0] > 0;  // is unary minus
-      }
-      else if (n.args.length===2) {
+      } else if (n.args.length===2) {
         return n.op===OpStr.MUL && isNeg(n.args[0]);  // leading term is neg
       }
     }
@@ -597,16 +595,18 @@ var Model = (function (target) {
     function negate(n) {
       if (typeof n === "number") {
         return -n;
-      }
-      else if (n.args.length === 1 && n.op === OpStr.SUB) {
-        return n.args[0];  // strip the unary minus
-      }
-      else if (n.args.length === 2 && n.op === OpStr.MUL && isNeg(n.args[0])) {
+      } else if (n.args.length === 1) {
+          if (n.op === Model.SUB) {
+            return n.args[0];  // strip the unary minus
+          } else if (n.op === Model.NUM) {
+            n.args[0] = "-" + n.args[0];
+            return n;
+          }
+      } else if (n.args.length === 2 && n.op === OpStr.MUL && isNeg(n.args[0])) {
         return {op: n.op, args: [negate(n.args[0]), n.args[1]]};
       }
       assert(false);
       return n;
-      
     }
 
     function additiveExpr() {
@@ -615,8 +615,8 @@ var Model = (function (target) {
       while (isAdditive(t = hd())) {
         next();
         var expr2 = multiplicativeExpr();
-        if (t === TK_ADD && isNeg(expr2)) {
-          t = TK_SUB;
+        if (t === TK_SUB) {
+          t = TK_ADD;
           expr2 = negate(expr2);
         }
         expr = {op: tokenToOperator[t], args: [expr, expr2]};

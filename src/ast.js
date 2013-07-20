@@ -44,7 +44,11 @@ var assert = !DEBUG
         str = "failed!";
       }
       if ( !val ) {
-        throw("assert: " + str);
+        try {
+          throw(new Error("assert: " + str));
+        } catch (e) {
+          throw e.stack;
+        }
       }
     };
 
