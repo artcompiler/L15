@@ -47,7 +47,7 @@ var assert = !DEBUG
         try {
           throw(new Error("assert: " + str));
         } catch (e) {
-          throw e.stack;
+          throw e + "\n" + e.stack;
         }
       }
     };
@@ -65,6 +65,8 @@ var trace = function trace(str) {
 }
 
 var Ast = (function () {
+
+  var TEST = false;
 
   // Pool of nodes. Shared between all Ast instances.
   var nodePool = [ "unused" ];  // nodePool[0] is reserved
@@ -262,7 +264,7 @@ var Ast = (function () {
     })();
   }
 
-  if (global.DEBUG) {
+  if (global.TEST) {
     test();
   }
 

@@ -62,6 +62,8 @@
 
 var Model = (function (target) {
 
+  var TEST = false;
+
   function error(str) {
     trace("error: " + str);
   }
@@ -516,7 +518,8 @@ var Model = (function (target) {
         break;
       case TK_SUB:
         next();
-        expr = negate(unaryExpr());
+        expr = unaryExpr();
+        expr = {op: Model.SUB, args: [expr]};
         break;
       default:
         expr = primaryExpr();
@@ -615,10 +618,6 @@ var Model = (function (target) {
       while (isAdditive(t = hd())) {
         next();
         var expr2 = multiplicativeExpr();
-        if (t === TK_SUB) {
-          t = TK_ADD;
-          expr2 = negate(expr2);
-        }
         expr = {op: tokenToOperator[t], args: [expr, expr2]};
       }
       return expr;
@@ -931,7 +930,7 @@ var Model = (function (target) {
 
 
 
-  if (global.DEBUG) {
+  if (global.TEST) {
     test();
   }
 
