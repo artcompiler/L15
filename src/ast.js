@@ -150,7 +150,7 @@ var Ast = (function () {
   }
 
   // Intern an AST into the node pool and return its node id.
-  Ast.prototype.intern = function intern(node) {
+  Ast.intern = Ast.prototype.intern = function intern(node) {
     if (this instanceof Ast &&
         node === undefined &&
         isNode(this)) {
