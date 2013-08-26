@@ -659,6 +659,7 @@ var Model = (function (target) {
 
       lexemeToToken["\\times"] = TK_MUL;
       lexemeToToken["\\div"]   = TK_DIV;
+      lexemeToToken["\\dfrac"]  = TK_FRAC;
       lexemeToToken["\\frac"]  = TK_FRAC;
       lexemeToToken["\\sqrt"]  = TK_SQRT;
       lexemeToToken["\\pm"]   = TK_PM;
