@@ -452,6 +452,9 @@ var Model = (function (target) {
       case TK_LEFTPAREN:
         e = parenExpr();
         break;
+      case TK_LEFTBRACE:
+        e = braceExpr();
+        break;
       case TK_FRAC:
         next();
         e = {op: tokenToOperator[TK_FRAC], args: [braceExpr(), braceExpr()]};
@@ -636,7 +639,6 @@ var Model = (function (target) {
         expr = {op: tokenToOperator[t], args: [expr, expr2]};
       }
       return expr;
-
     }
 
     function commaExpr( ) {
