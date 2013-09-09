@@ -77,6 +77,7 @@ var Model = (function (target) {
 
   // Create a model from a node object or expression string
   Model.create = Mp.create = function create(node) {
+    assert(node, "Model.create() called with invalid argument: " + node);
     if (!(this instanceof Model)) {
       return new Model().create(node);
     }
