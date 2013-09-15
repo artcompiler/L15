@@ -58,9 +58,7 @@
 
 "use strict";
 
-// require("ast.js");
-
-var Model = (function (target) {
+define(["lib/trace", "lib/assert", "src/ast"], function (trace, assert, Ast) {
 
   var TEST = false;
 
@@ -928,11 +926,9 @@ var Model = (function (target) {
     })();
   }
 
-
-
-  if (global.TEST) {
+  if (TEST) {
     test();
   }
 
   return Model;
-})();
+});

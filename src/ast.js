@@ -35,36 +35,9 @@
 
  */
 
-var DEBUG = true;
+"use strict";
 
-var assert = !DEBUG
-  ? function () { }
-  : function (val, str) {
-      if ( str === void 0 ) {
-        str = "failed!";
-      }
-      if ( !val ) {
-        try {
-          throw(new Error("assert: " + str));
-        } catch (e) {
-          throw e + "\n" + e.stack;
-        }
-      }
-    };
-
-var global = this;
-
-var trace = function trace(str) {
-  if (global.console && global.console.log) {
-    console.log(str);
-  } else if (global.print) {
-    print(str);
-  } else {
-    throw "No trace function defined!";
-  }
-}
-
-var Ast = (function () {
+define(["lib/trace", "lib/assert"], function (trace, assert) {
 
   var TEST = false;
 
@@ -264,11 +237,10 @@ var Ast = (function () {
     })();
   }
 
-  if (global.TEST) {
+  if (TEST) {
     test();
   }
 
   return Ast;
-
-})();
+});
 
