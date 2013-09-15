@@ -123,7 +123,7 @@ define(["lib/trace", "lib/assert"], function (trace, assert) {
   }
 
   // Intern an AST into the node pool and return its node id.
-  Ast.prototype.intern = function intern(node) {
+  Ast.intern = Ast.prototype.intern = function intern(node) {
     if (this instanceof Ast &&
         node === undefined &&
         isNode(this)) {
@@ -181,18 +181,18 @@ define(["lib/trace", "lib/assert"], function (trace, assert) {
   };
 
   // Dump the contents of the node pool.
-  Ast.prototype.dumpAll = function dumpAll() {
+  Ast.dumpAll = Ast.prototype.dumpAll = function dumpAll() {
     var s = "";
     var ast = this;
     
     nodePool.forEach(function (n, i) {
-      s += "\n" + i + ": " + ast.dump(n);
+      s += "\n" + i + ": " + Ast.dump(n);
     });
     return s;
   };
 
   // Dump the contents of a node.
-  Ast.prototype.dump = function dump(n) {
+  Ast.dump = Ast.prototype.dump = function dump(n) {
     if (typeof n === "string") {
       var s = "\""+n+"\"";
     } else if (typeof n === "number") {

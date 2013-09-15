@@ -75,6 +75,7 @@ define(["lib/trace", "lib/assert", "src/ast"], function (trace, assert, Ast) {
 
   // Create a model from a node object or expression string
   Model.create = Mp.create = function create(node) {
+    assert(node, "Model.create() called with invalid argument: " + node);
     if (!(this instanceof Model)) {
       return new Model().create(node);
     }
@@ -450,6 +451,9 @@ define(["lib/trace", "lib/assert", "src/ast"], function (trace, assert, Ast) {
       case TK_LEFTPAREN:
         e = parenExpr();
         break;
+      case TK_LEFTBRACE:
+        e = braceExpr();
+        break;
       case TK_FRAC:
         next();
         e = {op: tokenToOperator[TK_FRAC], args: [braceExpr(), braceExpr()]};
@@ -634,7 +638,6 @@ define(["lib/trace", "lib/assert", "src/ast"], function (trace, assert, Ast) {
         expr = {op: tokenToOperator[t], args: [expr, expr2]};
       }
       return expr;
-
     }
 
     function commaExpr( ) {
@@ -657,6 +660,7 @@ define(["lib/trace", "lib/assert", "src/ast"], function (trace, assert, Ast) {
 
       lexemeToToken["\\times"] = TK_MUL;
       lexemeToToken["\\div"]   = TK_DIV;
+      lexemeToToken["\\dfrac"]  = TK_FRAC;
       lexemeToToken["\\frac"]  = TK_FRAC;
       lexemeToToken["\\sqrt"]  = TK_SQRT;
       lexemeToToken["\\pm"]   = TK_PM;
