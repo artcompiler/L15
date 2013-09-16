@@ -603,16 +603,23 @@ var Model = (function (target) {
       if (typeof n === "number") {
         return -n;
       } else if (n.args.length === 1) {
-          if (n.op === Model.SUB) {
-            return n.args[0];  // strip the unary minus
-          } else if (n.op === Model.NUM) {
-            n.args[0] = "-" + n.args[0];
-            return n;
-          }
-      } else if (n.args.length === 2 && n.op === OpStr.MUL && isNeg(n.args[0])) {
+        if (n.op === Model.SUB) {
+          return n.args[0];  // strip the unary minus
+        } else if (n.op === Model.ADD) {
+          n.args[0] = negate(n.args[0]);
+          return n;
+        } else if (n.op === Model.NUM) {
+          n.args[0] = "-" + n.args[0];
+          return n;
+        } else {
+          return n;
+        }
+      } else if (n.args.length === 2 && n.op === OpStr.MUL) {
         return {op: n.op, args: [negate(n.args[0]), n.args[1]]};
+      } else if (n.args.length === 2 && n.op === OpStr.ADD) {
+        return {op: n.op, args: [negate(n.args[0]), negate(n.args[1])]};
       }
-      assert(false);
+      assert(false, "negate() op=" + n.op + " n.args.length=" + n.args.length);
       return n;
     }
 
@@ -622,7 +629,15 @@ var Model = (function (target) {
       while (isAdditive(t = hd())) {
         next();
         var expr2 = multiplicativeExpr();
-        expr = {op: tokenToOperator[t], args: [expr, expr2]};
+        switch(t) {
+        case TK_SUB:
+          trace("additiveExpr() found neg");
+          expr2 = negate(expr2);
+          // fall through
+        default:
+          expr = {op: Model.ADD, args: [expr, expr2]};
+          break;
+        }
       }
       return expr;
 
