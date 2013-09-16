@@ -16,9 +16,19 @@
  * limitations under the License.
  */
 
-load("model.js");
+var requirejs = require('requirejs');
 
-(function () {
+requirejs.config({
+  nodeRequire: require,
+  paths: {
+    lib: '../lib',
+    src: '../src'
+  }
+});
+
+requirejs(['lib/trace', 'src/ast', 'src/model'], function (trace, Ast, Model) {
+
+  var TEST = true;
 
   // Example plugin function
   Model.fn.isEqual = function isEqual(n1, n2) {
@@ -42,7 +52,7 @@ load("model.js");
   }
 
   function test() {
-    trace("\nMath model self testing");
+    trace("\nSimple math model self testing");
     (function () {
       var model = new Model();
       var node = model.fromLaTex("10 + 20");
@@ -54,8 +64,8 @@ load("model.js");
     })();
   }
 
-  if (global.DEBUG) {
+  if (TEST) {
     test();
   }
   
-})();
+});
