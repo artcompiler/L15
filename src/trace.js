@@ -18,9 +18,7 @@
 
 var DEBUG = true;
 
-requirejs.config({
-  nodeRequire: require
-});
+var global = this;
 
 define(function () {
   return !DEBUG ?

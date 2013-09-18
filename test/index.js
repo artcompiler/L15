@@ -16,19 +16,15 @@
  * limitations under the License.
  */
 
-var requirejs = require('requirejs');
-
 requirejs.config({
-  nodeRequire: require,
+  baseUrl: "../src",
   paths: {
-    lib: '../lib',
-    src: '../src'
+    src: "../src",
+    lib: "../lib"
   }
 });
 
-requirejs(['lib/trace', 'src/ast', 'src/model'], function (trace, Ast, Model) {
-
-  var TEST = true;
+requirejs(["trace", "ast", "model"], function (trace, Ast, Model) {
 
   // Example plugin function
   Model.fn.isEqual = function isEqual(n1, n2) {
@@ -64,6 +60,7 @@ requirejs(['lib/trace', 'src/ast', 'src/model'], function (trace, Ast, Model) {
     })();
   }
 
+  var TEST = true;
   if (TEST) {
     test();
   }

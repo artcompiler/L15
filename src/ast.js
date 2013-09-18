@@ -19,7 +19,7 @@
 "use strict";
 
 /*
-  This module implements th node factory for abstract syntax trees (AST).
+  This module implements the node factory for abstract syntax trees (AST).
 
   Each node inherits an Ast instance as it prototype.
 
@@ -35,11 +35,7 @@
 
  */
 
-"use strict";
-
-define(["lib/trace", "lib/assert"], function (trace, assert) {
-
-  var TEST = false;
+define(["trace", "assert"], function (trace, assert) {
 
   // Pool of nodes. Shared between all Ast instances.
   var nodePool = [ "unused" ];  // nodePool[0] is reserved
@@ -211,6 +207,7 @@ define(["lib/trace", "lib/assert"], function (trace, assert) {
   };
 
   // Self tests
+  var TEST = false;
   function test() {
     (function () {
       trace("Ast self testing");
@@ -236,7 +233,6 @@ define(["lib/trace", "lib/assert"], function (trace, assert) {
       trace(ast.dumpAll());
     })();
   }
-
   if (TEST) {
     test();
   }

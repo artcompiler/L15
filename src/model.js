@@ -58,9 +58,7 @@
 
 "use strict";
 
-define(["lib/trace", "lib/assert", "src/ast"], function (trace, assert, Ast) {
-
-  var TEST = false;
+define(["trace", "assert", "ast"], function (trace, assert, Ast) {
 
   function error(str) {
     trace("error: " + str);
@@ -945,6 +943,7 @@ define(["lib/trace", "lib/assert", "src/ast"], function (trace, assert, Ast) {
     })();
   }
 
+  var TEST = false;
   if (TEST) {
     test();
   }
