@@ -604,19 +604,25 @@ define(["trace", "assert", "ast"], function (trace, assert, Ast) {
         } else if (n.op === Model.ADD) {
           n.args[0] = negate(n.args[0]);
           return n;
-        } else if (n.op === Model.NUM) {
-          n.args[0] = "-" + n.args[0];
-          return n;
-        } else {
-          return n;
+        } else if (n.op === Model.NUM || n.op === Model.VAR) {
+          return {
+            op: Model.MUL,
+            args: [{
+              op: Model.NUM, args: ["-1"]
+            }, n]
+          };
         }
-      } else if (n.args.length === 2 && n.op === OpStr.MUL) {
-        return {op: n.op, args: [negate(n.args[0]), n.args[1]]};
-      } else if (n.args.length === 2 && n.op === OpStr.ADD) {
-        return {op: n.op, args: [negate(n.args[0]), negate(n.args[1])]};
+      } else if (n.args.length === 2) {
+        return {
+          op: Model.SUB,
+          args: [n]
+        };
       }
       assert(false, "negate() op=" + n.op + " n.args.length=" + n.args.length);
-      return n;
+      return {
+        op: Model.SUB,
+        args: [n]
+      };
     }
 
     function additiveExpr() {
