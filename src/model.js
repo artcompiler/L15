@@ -633,7 +633,6 @@ define(["trace", "assert", "ast"], function (trace, assert, Ast) {
         var expr2 = multiplicativeExpr();
         switch(t) {
         case TK_SUB:
-          trace("additiveExpr() found neg");
           expr2 = negate(expr2);
           // fall through
         default:
