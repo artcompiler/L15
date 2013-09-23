@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 
-var DEBUG = true;
-
-define(function () {
+var assert = (function () {
   return DEBUG ?
     function () { } :
     function (val, str) {
@@ -33,5 +31,5 @@ define(function () {
         }
       }
     }
-});
+})();
 

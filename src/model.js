@@ -56,9 +56,7 @@
 
 */
 
-"use strict";
-
-define(["trace", "assert", "ast"], function (trace, assert, Ast) {
+var Model = (function () {
 
   function error(str) {
     trace("error: " + str);
@@ -938,20 +936,12 @@ define(["trace", "assert", "ast"], function (trace, assert, Ast) {
       var result = str === "f(n + 1)" ? "PASS" : "FAIL";
       trace(result + ": " + "fromLaTex, toLaTex: " + str);
 
-//      var node = Model.create("1.35*10^(-4)");
-//      node.intern();
-//      var str = model.toLaTex(node);
-//      var result = str === "\\dfrac{1}{2}" ? "PASS" : "FAIL";
-//      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-//      trace(model.dumpAll());
     })();
   }
 
-  var TEST = false;
   if (TEST) {
     test();
   }
 
   return Model;
-});
+})();

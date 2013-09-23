@@ -16,11 +16,9 @@
  * limitations under the License.
  */
 
-var DEBUG = true;
-
 var global = this;
 
-define(function () {
+var trace = (function () {
   return !DEBUG ?
     function () { } :
     function trace(str) {
@@ -32,4 +30,4 @@ define(function () {
         throw "No trace function defined!";
       }
     }
-});
+})();

@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-"use strict";
-
 /*
   This module implements the node factory for abstract syntax trees (AST).
 
@@ -35,7 +33,7 @@
 
  */
 
-define(["trace", "assert"], function (trace, assert) {
+var Ast = (function () {
 
   // Pool of nodes. Shared between all Ast instances.
   var nodePool = [ "unused" ];  // nodePool[0] is reserved
@@ -207,7 +205,6 @@ define(["trace", "assert"], function (trace, assert) {
   };
 
   // Self tests
-  var TEST = false;
   function test() {
     (function () {
       trace("Ast self testing");
@@ -238,5 +235,4 @@ define(["trace", "assert"], function (trace, assert) {
   }
 
   return Ast;
-});
-
+})();
