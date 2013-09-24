@@ -34,6 +34,7 @@
  */
 
 var Ast = (function () {
+  var RUN_SELF_TESTS = false;
 
   // Pool of nodes. Shared between all Ast instances.
   var nodePool = [ "unused" ];  // nodePool[0] is reserved
@@ -227,10 +228,9 @@ var Ast = (function () {
       trace(result + ": " + "nid1 === nid5");
       var result = nid5 === nid6 ? "PASS" : "FAIL";
       trace(result + ": " + "nid5 === nid6");
-      trace(ast.dumpAll());
     })();
   }
-  if (TEST) {
+  if (RUN_SELF_TESTS) {
     test();
   }
 

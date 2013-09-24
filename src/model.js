@@ -57,6 +57,7 @@
 */
 
 var Model = (function () {
+  var RUN_SELF_TESTS = false;
 
   function error(str) {
     trace("error: " + str);
@@ -323,8 +324,7 @@ var Model = (function () {
     var TK_SUB = '-'.charCodeAt(0);
     var TK_TAN = 0x104;
     var TK_VAR = 'a'.charCodeAt(0);
-    var TK_COEFF = 'A'.charCodeAt(0);
-    var TK_VAR = 'a'.charCodeAt(0);
+    var TK_CONST = 'A'.charCodeAt(0);
     var TK_NEXT = 0x10A;
 
     // Define operator strings
@@ -724,7 +724,7 @@ var Model = (function () {
           default:
             if (c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
               lexeme += String.fromCharCode(c);
-              return TK_COEFF;
+              return TK_VAR;
             }
             else if (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0)) {
               lexeme += String.fromCharCode(c);
@@ -783,7 +783,6 @@ var Model = (function () {
     trace("\nModel self testing");
     (function () {
       var model = new Model();
-
       var node = model.fromLaTex("10 + 20");
       node.intern();
       var str = model.toLaTex(node);
@@ -813,13 +812,13 @@ var Model = (function () {
       var node = Model.create("(x+2)(x-3)");
       node.intern();
       var str = model.toLaTex(node);
-      var result = str === "(x + 2)(x - 3)" ? "PASS" : "FAIL";
+      var result = str === "(x + 2)(x + -1 \times 3)" ? "PASS" : "FAIL";
       trace(result + ": " + "fromLaTex, toLaTex: " + str);
 
       var node = Model.create("x^2+2x-1");
       node.intern();
       var str = model.toLaTex(node);
-      var result = str === "{x^{2}} + 2x - 1" ? "PASS" : "FAIL";
+      var result = str === "{x^{2}} + 2x + -1 \times 1" ? "PASS" : "FAIL";
       trace(result + ": " + "fromLaTex, toLaTex: " + str);
 
       var node = Model.create("e^(2pi)");
@@ -899,18 +898,8 @@ var Model = (function () {
 
       var node = Model.create("45J");
       var str = model.toLaTex(node);
-      var result = str === "" ? "PASS" : "FAIL";
+      var result = str === "45J" ? "PASS" : "FAIL";
       trace(result + ": " + "fromLaTex, toLaTex: " + str + " expected: 45J");
-
-//      var node = Model.create("[[2,0],[0,2]]*[1,1]");
-//      var str = model.toLaTex(node);
-//      var result = str === "" ? "PASS" : "FAIL";
-//      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-//      var node = Model.create("{1,2,3}");
-//      var str = model.toLaTex(node);
-//      var result = str === "" ? "PASS" : "FAIL";
-//      trace(result + ": " + "fromLaTex, toLaTex: " + str);
 
       var node = Model.create("((x)*(y))");
       node.intern();
@@ -939,7 +928,7 @@ var Model = (function () {
     })();
   }
 
-  if (TEST) {
+  if (RUN_SELF_TESTS) {
     test();
   }
 
