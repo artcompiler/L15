@@ -17,7 +17,6 @@
  */
 
 var global = this;
-
 var trace = (function () {
   return !DEBUG ?
     function () { } :
