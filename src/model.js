@@ -727,14 +727,10 @@ var Model = (function () {
               return TK_VAR;
             }
             else if (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0)) {
-              lexeme += String.fromCharCode(c);
-              return TK_VAR;
+              return variable(c);
             }
             else if (c === '.'.charCodeAt(0) ||
                      c >= '0'.charCodeAt(0) && c <= '9'.charCodeAt(0)) {
-              //lexeme += String.fromCharCode(c);
-              //c = src.charCodeAt(curIndex++);
-              //return TK_NUM;
               return number(c);
             }
             else {
@@ -755,6 +751,40 @@ var Model = (function () {
         curIndex--;
         
         return TK_NUM;
+      }
+
+      function variable(c) {
+        done:
+        while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0)) {
+          var ch = String.fromCharCode(c);
+          switch (lexeme) {
+          // shorter prefixes go here
+          case "":
+            lexeme += ch;
+            break;
+          case "k":
+          case "c":
+          case "m":
+          case "n":
+            switch (ch) {
+            case "g":
+            case "m":
+            case "s":
+              lexeme += ch;
+              break;
+            default:
+              break done;
+            }
+            break;
+          // no more prefixes, so we are done
+          default:
+            break done;
+          }
+          c = src.charCodeAt(curIndex++);
+        }
+        curIndex--;
+        trace("lexeme=" + lexeme);
+        return TK_VAR;
       }
 
       function latex() {
