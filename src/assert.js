@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-var DEBUG = false;  // turn on/off asserts
 var assert = (function () {
   return DEBUG ?
     function () { } :
