@@ -326,6 +326,7 @@ var Model = (function () {
     var TK_VAR = 'a'.charCodeAt(0);
     var TK_CONST = 'A'.charCodeAt(0);
     var TK_NEXT = 0x10A;
+    var TK_COMMA = ','.charCodeAt(0);
 
     // Define operator strings
     var OpStr = {
@@ -373,6 +374,7 @@ var Model = (function () {
     tokenToOperator[TK_CSC] = OpStr.CSC;
     tokenToOperator[TK_LN] = OpStr.LN;
     tokenToOperator[TK_EQL] = OpStr.EQL;
+    tokenToOperator[TK_COMMA] = OpStr.COMMA;
 
     var scan = scanner(src);
 
@@ -657,8 +659,18 @@ var Model = (function () {
     }
 
     function commaExpr( ) {
-      var n = equalExpr();
-      return n;
+      var expr = equalExpr();
+      var args = [expr];
+      var t;
+      while ((t = hd())===TK_COMMA) {
+        next();
+        args.push(equalExpr());
+      }
+      if (args.length > 1) {
+        return {op: tokenToOperator[TK_COMMA], args: args};
+      } else {
+        return expr;
+      }
     }
 
     function expr ( ) {
