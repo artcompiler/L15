@@ -149,6 +149,7 @@ var Model = (function () {
     ABS: "abs",
     PAREN: "()",
     HIGHLIGHT: "hi",
+    INTERVAL: "interval",
   };
 
   Object.keys(OpStr).forEach(function (v, i) {
@@ -430,9 +431,9 @@ var Model = (function () {
 
     function primaryExpr () {
       var e;
-      var t;
+      var tk;
       var op;
-      switch ((t=hd())) {
+      switch ((tk=hd())) {
       case 'A'.charCodeAt(0):
       case TK_VAR:
         e = {op: "var", args: [lexeme()]};
@@ -447,7 +448,7 @@ var Model = (function () {
         next();
         break;
       case TK_LEFTPAREN:
-        e = parenExpr();
+        e = parenExpr(tk);
         break;
       case TK_LEFTBRACE:
         e = braceExpr();
@@ -478,7 +479,7 @@ var Model = (function () {
       case TK_CSC:
       case TK_LN:
         next();
-        e = {op: tokenToOperator[t], args: [braceExpr()]};
+        e = {op: tokenToOperator[tk], args: [braceExpr()]};
         break;
       default:
         e = void 0;
@@ -501,10 +502,17 @@ var Model = (function () {
       return e;
     }
 
-    function parenExpr() {
-      eat(TK_LEFTPAREN);
+    function parenExpr(tk) {
+      eat(tk);
       var e = commaExpr();
-      eat(TK_RIGHTPAREN);
+      eat(tk2 = hd() === TK_RIGHTPAREN ? TK_RIGHTPAREN : TK_RIGHTBRACKET);
+      if (e.args.length !== 2 &&
+          (tk === TK_LEFTBRACKET || tk2 === TK_RIGHTBRACKET)) {
+        assert(false, "Square brackets can only be used to denote intervals.");
+      }
+      // Save the brackets as attributes on the node for later use.
+      e.lbrk = tk;
+      e.rbrk = tk2;
       return e;
     }
 
