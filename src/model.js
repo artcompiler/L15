@@ -73,6 +73,10 @@ var Model = (function () {
   // Create a model from a node object or expression string
   Model.create = Mp.create = function create(node) {
     assert(node, "Model.create() called with invalid argument: " + node);
+    // If we already have a model, then just return it.
+    if (node instanceof Model) {
+      return node;
+    }
     if (!(this instanceof Model)) {
       return new Model().create(node);
     }
@@ -455,7 +459,20 @@ var Model = (function () {
         break;
       case TK_FRAC:
         next();
-        e = {op: tokenToOperator[TK_FRAC], args: [braceExpr(), braceExpr()]};
+        var expr1 = braceExpr();
+        var expr2 = braceExpr();
+        e = {
+          op: Model.MUL,
+          args: [expr1, {
+            op: Model.POW,
+            args: [
+              expr2, {
+                op: Model.NUM,
+                args: ["-1"]
+              }
+            ]
+          }]
+        };
         break;
       case TK_SQRT:
         next();
@@ -560,36 +577,39 @@ var Model = (function () {
       var expr = exponentialExpr();
       var t;
 
-      while((t=hd())===TK_VAR || t===TK_LEFTPAREN) {
+      while((t=hd())===TK_VAR || t===TK_LEFTPAREN || isMultiplicative(t)) {
+        if (isMultiplicative(t)) {
+          op = tokenToOperator[t];
+          next();
+        } else {
+          op = Model.MUL;
+        }
         var expr2 = exponentialExpr();
         if (expr2 === 1) {
           expr = expr;
-        }
-        else if (expr === 1) {
+        } else if (t === TK_MUL && expr === 1) {
           expr = expr2;
-        }
-        else {
-          expr = {op: OpStr.MUL, args: [expr, expr2]};
-        }
-      }
-
-      while (isMultiplicative(t = hd())) {
-        next();
-        var expr2 = exponentialExpr();
-        if (expr2===1) {
-          expr = expr;
-        }
-        else if (t===TK_MUL && expr===1) {
-          expr = expr2;
-        }
-        else {
-          expr = {op: tokenToOperator[t], args: [expr, expr2]};
+        } else if (t === TK_FRAC || t === TK_DIV) {
+          expr = {
+            op: Model.MUL,
+            args: [expr, {
+              op: Model.POW,
+              args: [
+                expr2, {
+                  op: Model.NUM,
+                  args: ["-1"]
+                }
+              ]
+            }]
+          };
+        } else {
+          expr = {op: op, args: [expr, expr2]};
         }
       }
       return expr;
 
       function isMultiplicative(t) {
-        return t===TK_MUL || t===TK_DIV;
+        return t === TK_MUL || t === TK_DIV || t === TK_FRAC;
       }
     }
 
@@ -681,9 +701,10 @@ var Model = (function () {
       }
     }
 
-    function expr ( ) {
+    function expr() {
       start();
       var n = commaExpr();
+      assert(!hd(), "Unexpected input at character position: " + scan.pos() + " lexeme: " + scan.lexeme());
       return n;
     }
 
@@ -711,6 +732,7 @@ var Model = (function () {
       return {
         start : start ,
         lexeme : function () { return lexeme } ,
+        pos: function() { return curIndex; },
       }
 
       function start () {
@@ -803,7 +825,6 @@ var Model = (function () {
           c = src.charCodeAt(curIndex++);
         }
         curIndex--;
-        trace("lexeme=" + lexeme);
         return TK_VAR;
       }
 

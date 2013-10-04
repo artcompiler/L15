@@ -17,7 +17,7 @@
  */
 
 var assert = (function () {
-  return DEBUG ?
+  return !DEBUG ?
     function () { } :
     function (val, str) {
       if ( str === void 0 ) {
