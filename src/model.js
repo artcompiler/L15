@@ -478,10 +478,46 @@ var Model = (function () {
         next();
         switch(hd()) {
         case TK_LEFTBRACKET:
-          e = {op: tokenToOperator[TK_SQRT], args: [bracketExpr(), braceExpr()]};
+          var root = bracketExpr();
+          var base = braceExpr();
+          e = {
+            op: Model.POW,
+            args: [
+              base,
+              root,
+              {op: Model.NUM, args: ["-1"]}
+            ]};
           break;
         case TK_LEFTBRACE:
-          e = {op: tokenToOperator[TK_SQRT], args: [braceExpr()]};
+          var base = braceExpr();
+          if (base.op === Model.POW) {
+            // Merge exponents
+            // \sqrt{x^2} -> x^(2*2^-1)
+            e = {
+              op: Model.POW,
+              args: [
+                base.args[0], {
+                  op: Model.MUL,
+                  args: [
+                    base.args[1], {
+                      op: Model.POW,
+                      args: [
+                        {op: Model.NUM, args: ["2"]},
+                        {op: Model.NUM, args: ["-1"]}
+                      ]
+                    }
+                  ]
+                }
+              ]};
+          } else {
+            e = {
+              op: Model.POW,
+              args: [
+                base,
+                {op: Model.NUM, args: ["2"]},
+                {op: Model.NUM, args: ["-1"]}
+              ]};
+          }
           break;
         default:
           assert(false);
@@ -554,29 +590,24 @@ var Model = (function () {
     }
 
     function exponentialExpr() {
-      var expr = unaryExpr();
-      var t;
+      var t, args = [unaryExpr()];
       while ((t=hd())===TK_CARET) {
         next();
-        var expr2 = unaryExpr();
-        if (expr2===1) {
-          expr = expr;
-        }
-        else if (expr2===0) {
-          expr = 1;
-        }
-        else {
-          expr = {op: tokenToOperator[t], args: [expr, expr2]};
-        }
+        args.push(unaryExpr());
       }
-
-      return expr;
+      if (args.length > 1) {
+        return {
+          op: Model.POW,
+          args: args
+        };
+      } else {
+        return args[0];
+      }
     }
 
     function multiplicativeExpr() {
-      var expr = exponentialExpr();
-      var t;
-
+      var t, expr;
+      var args = [exponentialExpr()];
       while((t=hd())===TK_VAR || t===TK_LEFTPAREN || isMultiplicative(t)) {
         if (isMultiplicative(t)) {
           op = tokenToOperator[t];
@@ -584,29 +615,28 @@ var Model = (function () {
         } else {
           op = Model.MUL;
         }
-        var expr2 = exponentialExpr();
-        if (expr2 === 1) {
-          expr = expr;
-        } else if (t === TK_MUL && expr === 1) {
-          expr = expr2;
-        } else if (t === TK_FRAC || t === TK_DIV) {
+        expr = exponentialExpr();
+        if (t === TK_DIV) {
           expr = {
-            op: Model.MUL,
-            args: [expr, {
-              op: Model.POW,
-              args: [
-                expr2, {
-                  op: Model.NUM,
-                  args: ["-1"]
-                }
-              ]
-            }]
+            op: Model.POW,
+            args: [
+              expr, {
+                op: Model.NUM,
+                args: ["-1"]
+              }
+            ]
           };
-        } else {
-          expr = {op: op, args: [expr, expr2]};
         }
+        args.push(expr);
       }
-      return expr;
+      if (args.length > 1) {
+        return {
+          op: Model.MUL,
+          args: args
+        };
+      } else {
+        return args[0];
+      }
 
       function isMultiplicative(t) {
         return t === TK_MUL || t === TK_DIV || t === TK_FRAC;
