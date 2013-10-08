@@ -70,6 +70,11 @@ var Model = (function () {
 
   var Mp = Model.prototype = new Ast();
 
+  // Add messages here
+  Assert.messages[1001] = "Invalid syntax. '%1' expected, '%2' found."
+
+  var message = Assert.message;
+
   // Create a model from a node object or expression string
   Model.create = Mp.create = function create(node) {
     assert(node, "Model.create() called with invalid argument: " + node);
@@ -419,8 +424,9 @@ var Model = (function () {
     function eat (tc) {
       var tk = hd();
       if (tk !== tc) {
-        assert(false, "Expecting " + tc + " found " + tk);
-        error("syntax error");
+        var expected = String.fromCharCode(tc);
+        var found = tk ? String.fromCharCode(tk) : "EOS";
+        assert(false, message(1001, [expected, found]));
       }
       next();
     }

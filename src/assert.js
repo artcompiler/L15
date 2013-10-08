@@ -25,11 +25,27 @@ var assert = (function () {
       }
       if ( !val ) {
         try {
-          throw(new Error("assert: " + str));
+          throw(new Error(str));
         } catch (e) {
-          throw e + "\n" + e.stack;
+          throw e.message + "\n" + e.stack;
         }
       }
     }
 })();
 
+var message = function (errorCode, args) {
+  var str = Assert.messages[errorCode];
+  if (args) {
+    args.forEach(function (arg, i) {
+      str = str.replace("%" + (i + 1), arg);
+    });
+  }
+  return errorCode + ": " + str;
+};
+
+// Namespace functions for safe keeping.
+var Assert = {
+  assert: assert,
+  message: message,
+  messages: {},
+};
