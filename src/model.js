@@ -765,6 +765,38 @@ var Model = (function () {
       lexemeToToken["\\csc"]   = TK_CSC;
       lexemeToToken["\\ln"]   = TK_LN;
 
+      var units = [
+        "g",
+        "cg",
+        "kg",
+        "mg",
+        "ng",
+        "m",
+        "cm",
+        "km",
+        "mm",
+        "nm",
+        "s",
+        "cs",
+        "ks",
+        "ms",
+        "ns",
+        "in",
+        "ft",
+        "mi",
+        "fl",
+        "gi",
+        "pt",
+        "qt",
+        "gal",
+        "oz",
+        "lb",
+        "st",
+        "qtr",
+        "cwt",
+        "t",
+      ];
+
       return {
         start : start ,
         lexeme : function () { return lexeme } ,
@@ -832,52 +864,25 @@ var Model = (function () {
       }
 
       function variable(c) {
-        done:
+        // Normal variables are a single characters, but we treat units as
+        // variables too so we need to scan the whole unit string as a variable
+        // name.
+        var ch = String.fromCharCode(c);
+        lexeme += ch;
+
+        // All single character names are valid variable lexemes. Now we check
+        // for longer matches against unit names. The longest one wins.
         while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0)) {
-          var ch = String.fromCharCode(c);
-          switch (lexeme) {
-          // shorter prefixes go here
-          case "":
-            lexeme += ch;
-            break;
-          case "k":
-          case "c":
-          case "m":
-          case "n":
-            switch (ch) {
-            case "g":
-            case "m":
-            case "s":
-            case "i":
-              lexeme += ch;
-              break;
-            default:
-              break done;
-            }
-            break;
-          case "f":
-            switch (ch) {
-            case "t":
-              lexeme += ch;
-              break;
-            default:
-              break done;
-            }
-            break;
-          case "i":
-            switch (ch) {
-            case "n":
-              lexeme += ch;
-              break;
-            default:
-              break done;
-            }
-            break;
-          // no more prefixes, so we are done
-          default:
-            break done;
-          }
           c = src.charCodeAt(curIndex++);
+          var ch = String.fromCharCode(c);
+          var prefix = lexeme + ch;
+          var match = units.some(function (u) {
+            return u.indexOf(prefix) === 0;
+          });
+          if (!match) {
+            break;
+          }
+          lexeme += ch;
         }
         curIndex--;
         return TK_VAR;
