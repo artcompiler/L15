@@ -848,6 +848,25 @@ var Model = (function () {
             case "g":
             case "m":
             case "s":
+            case "i":
+              lexeme += ch;
+              break;
+            default:
+              break done;
+            }
+            break;
+          case "f":
+            switch (ch) {
+            case "t":
+              lexeme += ch;
+              break;
+            default:
+              break done;
+            }
+            break;
+          case "i":
+            switch (ch) {
+            case "n":
               lexeme += ch;
               break;
             default:
