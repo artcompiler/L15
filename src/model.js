@@ -71,13 +71,15 @@ var Model = (function () {
   var Mp = Model.prototype = new Ast();
 
   // Add messages here
-  Assert.messages[1001] = "Invalid syntax. '%1' expected, '%2' found."
-
+  Assert.reserveCodeRange(1000, 1999, "model");
+  Assert.messages[1001] = "Invalid syntax. '%1' expected, '%2' found.";
+  Assert.messages[1002] = "Square brackets can only be used to denote intervals.";
+  Assert.messages[1003] = "Extra characters in input at position: %1, lexeme: %2.";
   var message = Assert.message;
 
   // Create a model from a node object or expression string
   Model.create = Mp.create = function create(node) {
-    assert(node, "Model.create() called with invalid argument: " + node);
+    assert(node, "Model.create() called with invalid argument " + node);
     // If we already have a model, then just return it.
     if (node instanceof Model) {
       return node;
@@ -526,7 +528,7 @@ var Model = (function () {
           }
           break;
         default:
-          assert(false);
+          assert(false, message(1001, ["{ or (", String.fromCharCode(hd())]));
           break;
         }
         break;
@@ -567,7 +569,7 @@ var Model = (function () {
       eat(tk2 = hd() === TK_RIGHTPAREN ? TK_RIGHTPAREN : TK_RIGHTBRACKET);
       if (e.args.length !== 2 &&
           (tk === TK_LEFTBRACKET || tk2 === TK_RIGHTBRACKET)) {
-        assert(false, "Square brackets can only be used to denote intervals.");
+        assert(false, message(1002));
       }
       // Save the brackets as attributes on the node for later use.
       e.lbrk = tk;
@@ -682,7 +684,7 @@ var Model = (function () {
           args: [n]
         };
       }
-      assert(false, "negate() op=" + n.op + " n.args.length=" + n.args.length);
+      assert(false, "Unhandled case in negate() op=" + n.op + " n.args.length=" + n.args.length);
       return {
         op: Model.SUB,
         args: [n]
@@ -740,7 +742,7 @@ var Model = (function () {
     function expr() {
       start();
       var n = commaExpr();
-      assert(!hd(), "Unexpected input at character position: " + scan.pos() + " lexeme: " + scan.lexeme());
+      assert(!hd(), message(1003, [scan.pos(), scan.lexeme()]));
       return n;
     }
 

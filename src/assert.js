@@ -15,6 +15,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+  ASSERTS AND MESSAGES
+
+  We use the 'assert()' function to trap invalid states of all kinds. External
+  messages are distinguished from internal messages by a numeric prefix that
+  indicates the error code associated with the message. For example, the
+  following two asserts implement an internal and external assert, respectively.
+
+     assert(false, "This code is broken.");
+     assert(false, "1001: Invalid user input.");
+
+  To aid in the writing of external messages, we keep them in a single global
+  table named 'Assert.messages'. Each module adds to this table its own messages
+  with an expression such as
+
+     messages[1001] = "Invalid user input.";
+
+  These messages are accessed with the 'message' function as such
+
+     message(1001);
+
+  Calling 'assert' with 'message' looks like
+
+     assert(x != y, message(1001));
+
+  ALLOCATING ERROR CODES
+
+  In order to avoid error code conflicts, each module claims a range of values
+  that is not already taken by the modules in the same system. To catch
+  conflicts, we provide the function reserveCodeRange() to be use like this
+
+     reserveCodeRange(1000, 1999, "mymodule");
+
+  If the requested code range has any values that are already reserved, then
+  an assertion is raised.
+
+
+*/
 
 var assert = (function () {
   return !DEBUG ?
@@ -43,9 +81,20 @@ var message = function (errorCode, args) {
   return errorCode + ": " + str;
 };
 
+var reserveCodeRange = function (first, last, moduleName) {
+  assert(first <= last, "Invalid code range");
+  var noConflict = Assert.reservedCodes.every(function (range) {
+    return last < range.first || first > range.last;
+  });
+  assert(noConflict, "Conflicting request for error code range");
+  Assert.reservedCodes.push({first: first, last: last, name: moduleName});
+}
+
 // Namespace functions for safe keeping.
 var Assert = {
   assert: assert,
   message: message,
   messages: {},
+  reserveCodeRange: reserveCodeRange,
+  reservedCodes: [],
 };
