@@ -51,7 +51,6 @@
   If the requested code range has any values that are already reserved, then
   an assertion is raised.
 
-
 */
 
 var assert = (function () {

@@ -34,8 +34,6 @@
  */
 
 var Ast = (function () {
-  var RUN_SELF_TESTS = false;
-
   // Pool of nodes. Shared between all Ast instances.
   var nodePool = [ "unused" ];  // nodePool[0] is reserved
 
@@ -206,6 +204,7 @@ var Ast = (function () {
   };
 
   // Self tests
+  var RUN_SELF_TESTS = false;
   function test() {
     (function () {
       trace("Ast self testing");

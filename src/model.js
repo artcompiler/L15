@@ -75,6 +75,7 @@ var Model = (function () {
   Assert.messages[1001] = "Invalid syntax. '%1' expected, '%2' found.";
   Assert.messages[1002] = "Square brackets can only be used to denote intervals.";
   Assert.messages[1003] = "Extra characters in input at position: %1, lexeme: %2.";
+  Assert.messages[1004] = "Invalid character '%1' (%2) in input.";
   var message = Assert.message;
 
   // Create a model from a node object or expression string
@@ -543,6 +544,7 @@ var Model = (function () {
         e = {op: tokenToOperator[tk], args: [braceExpr()]};
         break;
       default:
+        assert(false, "Model.primaryExpr() unexpected expression kind");
         e = void 0;
         break;
       }
@@ -846,7 +848,7 @@ var Model = (function () {
               return number(c);
             }
             else {
-              assert( false, "scan.start(): c="+c);
+              assert(false, message(1004, [String.fromCharCode(c), c]));
               return 0;
             }
           }
