@@ -868,7 +868,7 @@ var Model = (function () {
       }
 
       function variable(c) {
-        // Normal variables are a single characters, but we treat units as
+        // Normal variables are a single character, but we treat units as
         // variables too so we need to scan the whole unit string as a variable
         // name.
         var ch = String.fromCharCode(c);
