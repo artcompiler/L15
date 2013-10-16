@@ -780,6 +780,8 @@ var Model = (function () {
         "km",
         "mm",
         "nm",
+        "L",
+        "mL",
         "s",
         "cs",
         "ks",
@@ -789,16 +791,12 @@ var Model = (function () {
         "ft",
         "mi",
         "fl",
-        "gi",
+        "cup",
         "pt",
         "qt",
         "gal",
         "oz",
         "lb",
-        "st",
-        "qtr",
-        "cwt",
-        "t",
       ];
 
       return {
