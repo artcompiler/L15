@@ -76,8 +76,9 @@
 
 */
 
+var ASSERT = true;
 var assert = (function () {
-  return !DEBUG ?
+  return !ASSERT ?
     function () { } :
     function (val, str) {
       if ( str === void 0 ) {

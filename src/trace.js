@@ -16,9 +16,10 @@
  * limitations under the License.
  */
 
+var TRACE = true;
 var global = this;
 var trace = (function () {
-  return !DEBUG ?
+  return !TRACE ?
     function () { } :
     function trace(str) {
       if (global.console && global.console.log) {
