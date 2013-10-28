@@ -618,7 +618,9 @@ var Model = (function () {
     function multiplicativeExpr() {
       var t, expr;
       var args = [exponentialExpr()];
-      while((t=hd())===TK_VAR || t===TK_LEFTPAREN || isMultiplicative(t)) {
+      // While lookahead is not a lower precedent operator
+      while((t = hd()) && !isAdditive(t) && t !== TK_COMMA && t !== TK_EQL && 
+            t !== TK_RIGHTBRACE && t !== TK_RIGHTPAREN && t !== TK_RIGHTBRACKET) {
         if (isMultiplicative(t)) {
           op = tokenToOperator[t];
           next();
@@ -649,7 +651,7 @@ var Model = (function () {
       }
 
       function isMultiplicative(t) {
-        return t === TK_MUL || t === TK_DIV || t === TK_FRAC;
+        return t === TK_MUL || t === TK_DIV;
       }
     }
 
@@ -693,6 +695,10 @@ var Model = (function () {
       };
     }
 
+    function isAdditive(t) {
+      return t === TK_ADD || t === TK_SUB || t === TK_PM;
+    }
+
     function additiveExpr() {
       var expr = multiplicativeExpr();
       var t;
@@ -709,10 +715,6 @@ var Model = (function () {
         }
       }
       return expr;
-
-      function isAdditive(t) {
-        return t === TK_ADD || t === TK_SUB || t === TK_PM;
-      }
     }
 
     function equalExpr() {
