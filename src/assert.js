@@ -97,7 +97,7 @@ var assert = (function () {
 var message = function (errorCode, args) {
   var str = Assert.messages[errorCode];
   if (args) {
-    args.forEach(function (arg, i) {
+    forEach(args, function (arg, i) {
       str = str.replace("%" + (i + 1), arg);
     });
   }
@@ -106,7 +106,7 @@ var message = function (errorCode, args) {
 
 var reserveCodeRange = function (first, last, moduleName) {
   assert(first <= last, "Invalid code range");
-  var noConflict = Assert.reservedCodes.every(function (range) {
+  var noConflict = every(Assert.reservedCodes, function (range) {
     return last < range.first || first > range.last;
   });
   assert(noConflict, "Conflicting request for error code range");

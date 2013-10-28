@@ -98,7 +98,7 @@ var Model = (function () {
       node = JSON.parse(JSON.stringify(node));
     }
     // Add missing plugin functions to the Model prototype
-    Object.keys(Model.fn).forEach(function (v, i) {
+    forEach(keys(Model.fn), function (v, i) {
       if (!Mp.hasOwnProperty(v)) {
         Mp[v] = function () {
           var fn = Model.fn[v];
@@ -116,7 +116,7 @@ var Model = (function () {
       }
     });
     // Now copy the node's properties into the model object
-    Object.keys(node).forEach(function (v, i) {
+    forEach(keys(node), function (v, i) {
         model[v] = node[v];
     });
     return model;
@@ -164,7 +164,7 @@ var Model = (function () {
     INTERVAL: "interval",
   };
 
-  Object.keys(OpStr).forEach(function (v, i) {
+  forEach(keys(OpStr), function (v, i) {
     Model[v] = OpStr[v];
   });
     
@@ -259,7 +259,7 @@ var Model = (function () {
         // if subexpr is lower precedence, wrap in parens
         var prevTerm;
         text = "";
-        n.args.forEach(function (term, index) {
+        forEach(n.args, function (term, index) {
           if (term.args && (term.args.length >= 2)) {
             if (term.op===OpStr.ADD || term.op===OpStr.SUB) {
               args[index] = "(" + args[index] + ")";
@@ -288,7 +288,7 @@ var Model = (function () {
         break;
       case OpStr.ADD:
       case OpStr.COMMA:
-        args.forEach(function (value, index) {
+        forEach(args, function (value, index) {
           if (index===0) {
             text = value;
           }
@@ -880,7 +880,7 @@ var Model = (function () {
           c = src.charCodeAt(curIndex++);
           var ch = String.fromCharCode(c);
           var prefix = lexeme + ch;
-          var match = units.some(function (u) {
+          var match = some(units, function (u) {
             return u.indexOf(prefix) === 0;
           });
           if (!match) {

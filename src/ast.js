@@ -65,7 +65,7 @@ var Ast = (function () {
       }
     } else if (op !== null && typeof op === "object") {
       var obj = op;
-      Object.keys(obj).forEach(function (v, i) {
+      forEach(keys(obj), function (v, i) {
         node[v] = obj[v];
       });
     }
@@ -178,7 +178,7 @@ var Ast = (function () {
     var s = "";
     var ast = this;
     
-    nodePool.forEach(function (n, i) {
+    forEach(nodePool, function (n, i) {
       s += "\n" + i + ": " + Ast.dump(n);
     });
     return s;
