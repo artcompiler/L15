@@ -622,10 +622,7 @@ var Model = (function () {
       while((t = hd()) && !isAdditive(t) && t !== TK_COMMA && t !== TK_EQL && 
             t !== TK_RIGHTBRACE && t !== TK_RIGHTPAREN && t !== TK_RIGHTBRACKET) {
         if (isMultiplicative(t)) {
-          op = tokenToOperator[t];
           next();
-        } else {
-          op = Model.MUL;
         }
         expr = exponentialExpr();
         if (t === TK_DIV) {
