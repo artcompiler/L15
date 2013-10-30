@@ -230,5 +230,17 @@ var prototypeOfObject = Object.prototype;
 var _toString = function (val) { return prototypeOfObject.toString.apply(val); }; //call.bind(prototypeOfObject.toString);
 var owns = function (object, name) { return prototypeOfObject.hasOwnProperty.call(object, name); }; //call.bind(prototypeOfObject.hasOwnProperty);
 
+var create = function create(o) {
+  if(Object.create) {
+    return Object.create(o)
+  }
+  var F = function () {};
+  if (arguments.length != 1) {
+    throw new Error('Object.create implementation only accepts one parameter.');
+  }
+  F.prototype = o;
+  return new F();
+};
+
 
 
