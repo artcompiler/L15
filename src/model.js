@@ -89,7 +89,7 @@ var Model = (function () {
       return new Model().create(node);
     }
     // Create a node that inherits from Ast
-    var model = Object.create(this);
+    var model = create(this);
     if (typeof node === "string") {
       // Got a string, so parse it into a node
       node = parse(node).expr();

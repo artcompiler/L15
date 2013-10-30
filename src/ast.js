@@ -55,7 +55,7 @@ var Ast = (function () {
   // Create a node for operation 'op'
   Ast.prototype.create = function create(op, args) {
     // Create a node that inherits from Ast
-    var node = Object.create(this);
+    var node = create(this);
     if (typeof op === "string") {
       node.op = op;
       if (args instanceof Array) {
