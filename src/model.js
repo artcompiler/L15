@@ -756,17 +756,23 @@ var Model = (function () {
 
       lexemeToToken["\\times"] = TK_MUL;
       lexemeToToken["\\div"]   = TK_DIV;
-      lexemeToToken["\\dfrac"]  = TK_FRAC;
+      lexemeToToken["\\dfrac"] = TK_FRAC;
       lexemeToToken["\\frac"]  = TK_FRAC;
       lexemeToToken["\\sqrt"]  = TK_SQRT;
-      lexemeToToken["\\pm"]   = TK_PM;
+      lexemeToToken["\\pm"]    = TK_PM;
       lexemeToToken["\\sin"]   = TK_SIN;
       lexemeToToken["\\cos"]   = TK_COS;
       lexemeToToken["\\tan"]   = TK_TAN;
       lexemeToToken["\\sec"]   = TK_SEC;
       lexemeToToken["\\cot"]   = TK_COT;
       lexemeToToken["\\csc"]   = TK_CSC;
-      lexemeToToken["\\ln"]   = TK_LN;
+      lexemeToToken["\\ln"]    = TK_LN;
+      lexemeToToken["\\left"]  = null;  // whitespace
+      lexemeToToken["\\right"] = null;
+      lexemeToToken["\\big"]   = null;
+      lexemeToToken["\\Big"]   = null;
+      lexemeToToken["\\bigg"]  = null;
+      lexemeToToken["\\Bigg"]  = null;
 
       var units = [
         "g",
@@ -816,7 +822,12 @@ var Model = (function () {
             continue;
           case 92:  // backslash
             lexeme += String.fromCharCode(c);
-            return latex();
+            var tk = latex();
+            if (tk) {
+              return tk;
+            }
+            lexeme = "";
+            continue;  // whitespace
           case 40:  // left paren
           case 41:  // right paren
           case 42:  // asterisk
@@ -891,14 +902,15 @@ var Model = (function () {
 
       function latex() {
         var c = src.charCodeAt(curIndex++);
-        while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0)) {
+        while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
+               c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
           lexeme += String.fromCharCode(c);
           c = src.charCodeAt(curIndex++);
         }
         curIndex--;
 
         var tk = lexemeToToken[lexeme];
-        if (tk===void 0) {
+        if (tk === void 0) {
           tk = TK_VAR;   // e.g. \\theta
         }
         return tk;
