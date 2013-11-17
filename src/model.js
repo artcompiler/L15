@@ -57,8 +57,6 @@
 */
 
 var Model = (function () {
-  var RUN_SELF_TESTS = false;
-
   function error(str) {
     trace("error: " + str);
   }
@@ -539,12 +537,30 @@ var Model = (function () {
       case TK_SEC:
       case TK_COT:
       case TK_CSC:
-      case TK_LN:
         next();
-        e = {op: tokenToOperator[tk], args: [braceExpr()]};
+        var t, args = [];
+        // Collect exponents if there are any
+        while ((t=hd())===TK_CARET) {
+          next();
+          args.push(unaryExpr());
+        }
+        // Finish the trig function
+        args.unshift({
+          op: tokenToOperator[tk],
+          args: [primaryExpr()]
+        });
+        if (args.length > 1) {
+          return {
+            op: Model.POW,
+            args: args
+          };
+        } else {
+          return args[0];
+        }
         break;
+      case TK_LN:                   
       default:
-        assert(false, "Model.primaryExpr() unexpected expression kind");
+        assert(false, "Model.primaryExpr() unexpected expression kind " + lexeme());
         e = void 0;
         break;
       }
@@ -671,7 +687,7 @@ var Model = (function () {
         } else if (n.op === Model.ADD) {
           n.args[0] = negate(n.args[0]);
           return n;
-        } else if (n.op === Model.NUM || n.op === Model.VAR) {
+        } else {
           return {
             op: Model.MUL,
             args: [{
@@ -927,155 +943,13 @@ var Model = (function () {
   function test() {
     trace("\nModel self testing");
     (function () {
-      var model = new Model();
-      var node = model.fromLaTex("10 + 20");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "10 + 20" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-      var nid1 = Model.create("10 + 20").intern();
-      node.intern();
-      var nid2 = Model.create({
-        "op":"+",
-        "args":[{
-          "op": "num",
-          "args": [10]
-        }, {
-          "op": "num",
-          "args": [20]
-        }]
-      }).intern();
-      var result = nid1 === nid2 ? "PASS" : "FAIL";
-      trace(result + ": " + "Model.create() nid1=" + nid1 + " nid2=" + nid2);
-
-      var node = Model.create("e^2");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "{e^{2}}" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("(x+2)(x-3)");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "(x + 2)(x + -1 \times 3)" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("x^2+2x-1");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "{x^{2}} + 2x + -1 \times 1" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("e^(2pi)");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "{e^{2pi}}" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("sin(2x)");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "{e^{2pi}}" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("2sin(x)cos(x)");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "{e^{2pi}}" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("(x+y)^2");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "{ (x + y) ^{2}}" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("x^2+2xy+y^2");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "{x^{2}} + 2xy + {y^{2}}" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("x=2(y+1)");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "x = 2(y + 1)" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("x=2*y+2");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "x = 2y + 2" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("x-2=2*y");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "x - 2 = 2y" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("0.00012");
-      var str = model.toLaTex(node);
-      var result = str === "0.00012" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("1.2e-4");
-      var str = model.toLaTex(node);
-      var result = str === "1.2e - 4" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("3m2cm");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("302cm");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "302cm" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("45N*m");
-      var str = model.toLaTex(node);
-      var result = str === "" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str + " expected: 45Nm");
-
-      var node = Model.create("45J");
-      var str = model.toLaTex(node);
-      var result = str === "45J" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str + " expected: 45J");
-
-      var node = Model.create("((x)*(y))");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "xy" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("1/2");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "\\dfrac{1}{2}" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("a+b+c+d+e+f");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "a + b + c + d + e + f" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
-      var node = Model.create("f(n+1)");
-      node.intern();
-      var str = model.toLaTex(node);
-      var result = str === "f(n + 1)" ? "PASS" : "FAIL";
-      trace(result + ": " + "fromLaTex, toLaTex: " + str);
-
+      var node = Model.create("\\cos (2\\theta) = \\cos^2 \\theta - \\sin^2 \\theta");
+      trace("node=" + JSON.stringify(node, null, 2));
     })();
   }
-
+  var RUN_SELF_TESTS = false;
   if (RUN_SELF_TESTS) {
     test();
   }
-
   return Model;
 })();
