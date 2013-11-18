@@ -135,8 +135,10 @@ var Ast = (function () {
     var args = "";
     var args_nids = [ ];
     for (var i=0; i < count; i++) {
-      if (node.op === "num" || node.op === "str") {
+      if (node.op === "str") {
         args += args_nids[i] = node.args[i];
+      } else if (node.op === "num") {
+        args += args_nids[i] = +node.args[i];
       } else {
         args += args_nids[i] = intern(node.args[i]);
       }
