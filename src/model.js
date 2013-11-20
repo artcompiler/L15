@@ -156,6 +156,7 @@ var Model = (function () {
     CST: "cst",
     COMMA: ",",
     POW: "^",
+    SUBSCRIPT: "_",
     ABS: "abs",
     PAREN: "()",
     HIGHLIGHT: "hi",
@@ -175,6 +176,7 @@ var Model = (function () {
   OpToLaTeX[OpStr.EQL] = "=";
   OpToLaTeX[OpStr.ATAN2] = "\\atan2";
   OpToLaTeX[OpStr.POW] = "^";
+  OpToLaTeX[OpStr.SUBSCRIPT] = "_";
   OpToLaTeX[OpStr.PM] = "\\pm";
   OpToLaTeX[OpStr.SIN] = "\\sin";
   OpToLaTeX[OpStr.COS] = "\\cos";
@@ -313,6 +315,7 @@ var Model = (function () {
     var TK_NONE = 0;
     var TK_ADD = '+'.charCodeAt(0);
     var TK_CARET = '^'.charCodeAt(0);
+    var TK_UNDERSCORE = '_'.charCodeAt(0);
     var TK_COS = 0x105;
     var TK_COT = 0x108;
     var TK_CSC = 0x109;
@@ -338,6 +341,8 @@ var Model = (function () {
     var TK_CONST = 'A'.charCodeAt(0);
     var TK_NEXT = 0x10A;
     var TK_COMMA = ','.charCodeAt(0);
+    var TK_LG = 0x10B;
+    var TK_LOG = 0x10C;
 
     // Define operator strings
     var OpStr = {
@@ -357,10 +362,13 @@ var Model = (function () {
       COT: "cot",
       CSC: "csc",
       LN: "ln",
+      LG: "lg",
+      LOG: "log",
       VAR: "var",
       CST: "cst",
       COMMA: ",",
       POW: "^",
+      SUBSCRIPT: "_",
       ABS: "abs",
       PAREN: "()",
       HIGHLIGHT: "hi",
@@ -384,6 +392,8 @@ var Model = (function () {
     tokenToOperator[TK_COT] = OpStr.COT;
     tokenToOperator[TK_CSC] = OpStr.CSC;
     tokenToOperator[TK_LN] = OpStr.LN;
+    tokenToOperator[TK_LG] = OpStr.LG;
+    tokenToOperator[TK_LOG] = OpStr.LOG;
     tokenToOperator[TK_EQL] = OpStr.EQL;
     tokenToOperator[TK_COMMA] = OpStr.COMMA;
 
@@ -558,7 +568,44 @@ var Model = (function () {
           return args[0];
         }
         break;
-      case TK_LN:                   
+      case TK_LN:
+        next();
+        return {
+          op: Model.LOG,
+          args: [{
+            op: Model.VAR,
+            args: ["e"]
+          }, primaryExpr()]
+        };
+      case TK_LG:
+        next();
+        return {
+          op: Model.LOG,
+          args: [{
+            op: Model.NUM,
+            args: ["10"]
+          }, primaryExpr()]
+        };
+      case TK_LOG:
+        next();
+        var t, args = [];
+        // Collect the subscript if there is one
+        if ((t=hd())===TK_UNDERSCORE) {
+          next();
+          args.push(primaryExpr());
+        } else {
+          args.push({
+            op: Model.VAR,
+            args: ["e"]    // default to natural log
+          });
+        }
+        args.push(primaryExpr());
+        // Finish the log function
+        return {
+          op: Model.LOG,
+          args: args
+        };
+        break;
       default:
         assert(false, "Model.primaryExpr() unexpected expression kind " + lexeme());
         e = void 0;
@@ -783,6 +830,8 @@ var Model = (function () {
       lexemeToToken["\\cot"]   = TK_COT;
       lexemeToToken["\\csc"]   = TK_CSC;
       lexemeToToken["\\ln"]    = TK_LN;
+      lexemeToToken["\\lg"]    = TK_LG;
+      lexemeToToken["\\log"]   = TK_LOG;
       lexemeToToken["\\left"]  = null;  // whitespace
       lexemeToToken["\\right"] = null;
       lexemeToToken["\\big"]   = null;
@@ -855,6 +904,7 @@ var Model = (function () {
           case 91:  // left bracket
           case 93:  // right bracket
           case 94:  // caret
+          case 95:  // underscore
           case 123: // left brace
           case 125: // right brace
             lexeme += String.fromCharCode(c);
