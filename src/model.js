@@ -343,6 +343,7 @@ var Model = (function () {
     var TK_COMMA = ','.charCodeAt(0);
     var TK_LG = 0x10B;
     var TK_LOG = 0x10C;
+    var TK_TEXT = 0x10D;
 
     // Define operator strings
     var OpStr = {
@@ -372,6 +373,7 @@ var Model = (function () {
       ABS: "abs",
       PAREN: "()",
       HIGHLIGHT: "hi",
+      TEXT: "text",
     };
 
     // Define mapping from token to operator
@@ -396,6 +398,7 @@ var Model = (function () {
     tokenToOperator[TK_LOG] = OpStr.LOG;
     tokenToOperator[TK_EQL] = OpStr.EQL;
     tokenToOperator[TK_COMMA] = OpStr.COMMA;
+    tokenToOperator[TK_TEXT] = OpStr.TEXT;
 
     var scan = scanner(src);
 
@@ -838,7 +841,11 @@ var Model = (function () {
       lexemeToToken["\\Big"]   = null;
       lexemeToToken["\\bigg"]  = null;
       lexemeToToken["\\Bigg"]  = null;
-
+      lexemeToToken["\\text"]  = TK_TEXT;
+      lexemeToToken["\\textrm"]  = TK_TEXT;
+      lexemeToToken["\\textit"]  = TK_TEXT;
+      lexemeToToken["\\textbf"]  = TK_TEXT;
+      
       var units = [
         "g",
         "cg",
@@ -978,6 +985,19 @@ var Model = (function () {
         var tk = lexemeToToken[lexeme];
         if (tk === void 0) {
           tk = TK_VAR;   // e.g. \\theta
+        } else if (tk === TK_TEXT) {
+          var c = src.charCodeAt(curIndex++);
+          while (c !== "{".charCodeAt(0)) {
+            c = src.charCodeAt(curIndex++);
+          }
+          lexeme = "";
+          var c = src.charCodeAt(curIndex++);
+          while (c !== "}".charCodeAt(0)) {
+            var ch = String.fromCharCode(c);
+            lexeme += ch;
+            c = src.charCodeAt(curIndex++);
+          }
+          tk = TK_VAR; // treat as a variable
         }
         return tk;
       }
