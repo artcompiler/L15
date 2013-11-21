@@ -85,11 +85,7 @@ var assert = (function () {
         str = "failed!";
       }
       if ( !val ) {
-        try {
-          throw(new Error(str));
-        } catch (e) {
-          throw e.message + "\n" + e.stack;
-        }
+        throw(new Error(str));
       }
     }
 })();

@@ -159,16 +159,16 @@ var Ast = (function () {
   // Get a node from the node pool.
   Ast.prototype.node = function node(nid) {
     var n = JSON.parse(JSON.stringify(nodePool[nid]));
-    var node = this.create(n);
+    var node = create(n);
     // if literal, then unwrap.
     switch (n.op) {
     case "num":
     case "str":
-      n = n.args[0];
+      n = n;
       break;
     default:
       for (var i=0; i < n.args.length; i++) {
-        n.args[i] = node(n.args[i]);
+        n.args[i] = this.node(n.args[i]);
       }
       break;
     }
