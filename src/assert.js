@@ -85,13 +85,17 @@ var assert = (function () {
         str = "failed!";
       }
       if ( !val ) {
-        throw(new Error(str));
+        
+        var err = new Error(str);
+        err.location = Assert.location;
+        throw err;
       }
     }
 })();
 
 var message = function (errorCode, args) {
   var str = Assert.messages[errorCode];
+  var location = Assert.location;
   if (args) {
     forEach(args, function (arg, i) {
       str = str.replace("%" + (i + 1), arg);
@@ -109,6 +113,15 @@ var reserveCodeRange = function (first, last, moduleName) {
   Assert.reservedCodes.push({first: first, last: last, name: moduleName});
 }
 
+var setLocation = function (location) {
+  assert(location, "Empty location");
+  Assert.location = location;
+}
+
+var clearLocation = function () {
+  Assert.location = null;
+}
+
 // Namespace functions for safe keeping.
 var Assert = {
   assert: assert,
@@ -116,4 +129,6 @@ var Assert = {
   messages: {},
   reserveCodeRange: reserveCodeRange,
   reservedCodes: [],
+  setLocation: setLocation,
+  clearLocation: clearLocation,
 };

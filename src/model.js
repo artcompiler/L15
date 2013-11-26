@@ -77,17 +77,21 @@ var Model = (function () {
   var message = Assert.message;
 
   // Create a model from a node object or expression string
-  Model.create = Mp.create = function create(node) {
+  Model.create = Mp.create = function create(node, location) {
     assert(node, "Model.create() called with invalid argument " + node);
     // If we already have a model, then just return it.
     if (node instanceof Model) {
+      if (location) {
+        node.location = location;
+      }
       return node;
     }
     if (!(this instanceof Model)) {
-      return new Model().create(node);
+      return new Model().create(node, location);
     }
     // Create a node that inherits from Ast
     var model = create(this);
+    model.location = location;
     if (typeof node === "string") {
       // Got a string, so parse it into a node
       node = parse(node).expr();
