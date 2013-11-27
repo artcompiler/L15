@@ -114,7 +114,7 @@ var reserveCodeRange = function (first, last, moduleName) {
 }
 
 var setLocation = function (location) {
-  assert(location, "Empty location");
+  //assert(location, "Empty location");
   Assert.location = location;
 }
 
