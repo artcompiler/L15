@@ -476,6 +476,7 @@ var Model = (function () {
         next();
         break;
       case TK_LEFTPAREN:
+      case TK_LEFTBRACKET:
         e = parenExpr(tk);
         break;
       case TK_LEFTBRACE:
