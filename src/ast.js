@@ -125,7 +125,7 @@ var Ast = (function () {
     }
     // Intern primitive values and construct nodes for them.
     if (typeof node === "number") {
-      node = {op: "num", args: [node]};
+      node = {op: "num", args: [node.toString()]};
     } else if (typeof node === "string") {
       node = {op: "str", args: [node]};
     }
@@ -138,7 +138,7 @@ var Ast = (function () {
       if (node.op === "str") {
         args += args_nids[i] = node.args[i];
       } else if (node.op === "num") {
-        args += args_nids[i] = +node.args[i];
+        args += args_nids[i] = node.args[i];
       } else {
         args += args_nids[i] = intern(node.args[i]);
       }
