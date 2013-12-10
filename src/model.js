@@ -317,7 +317,7 @@ var Model = (function () {
 
   var parse = function parse(src) {
 
-    // Define lexical tokans
+    // Define lexical tokens
     var TK_NONE = 0;
     var TK_ADD = '+'.charCodeAt(0);
     var TK_CARET = '^'.charCodeAt(0);
@@ -672,11 +672,27 @@ var Model = (function () {
       return expr;
     }
 
-    function exponentialExpr() {
+    function subscriptExpr() {
       var t, args = [unaryExpr()];
-      while ((t=hd())===TK_CARET) {
+      while ((t=hd())===TK_UNDERSCORE) {
         next();
         args.push(unaryExpr());
+      }
+      if (args.length > 1) {
+        return {
+          op: Model.SUBSCRIPT,
+          args: args
+        };
+      } else {
+        return args[0];
+      }
+    }
+
+    function exponentialExpr() {
+      var t, args = [subscriptExpr()];
+      while ((t=hd())===TK_CARET) {
+        next();
+        args.push(subscriptExpr());
       }
       if (args.length > 1) {
         return {
