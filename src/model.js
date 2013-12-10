@@ -166,7 +166,14 @@ var Model = (function () {
     ABS: "abs",
     PAREN: "()",
     HIGHLIGHT: "hi",
+    LT: "lt",
+    LE: "le",
+    GT: "gt",
+    GE: "ge",
     INTERVAL: "interval",
+    EXISTS: "exists",
+    IN: "in",
+    FORALL: "forall",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -350,6 +357,13 @@ var Model = (function () {
     var TK_LG = 0x10B;
     var TK_LOG = 0x10C;
     var TK_TEXT = 0x10D;
+    var TK_LT = 0x10E;
+    var TK_LE = 0x10F;
+    var TK_GT = 0x110;
+    var TK_GE = 0x111;
+    var TK_EXISTS = 0x112;
+    var TK_IN = 0x113;
+    var TK_FORALL = 0x114;
 
     // Define operator strings
     var OpStr = {
@@ -380,6 +394,13 @@ var Model = (function () {
       PAREN: "()",
       HIGHLIGHT: "hi",
       TEXT: "text",
+      LT: "lt",
+      LE: "le",
+      GT: "gt",
+      GE: "ge",
+      EXISTS: "exists",
+      IN: "in",
+      FORALL: "forall",
     };
 
     // Define mapping from token to operator
@@ -405,6 +426,13 @@ var Model = (function () {
     tokenToOperator[TK_EQL] = OpStr.EQL;
     tokenToOperator[TK_COMMA] = OpStr.COMMA;
     tokenToOperator[TK_TEXT] = OpStr.TEXT;
+    tokenToOperator[TK_LT] = OpStr.LT;
+    tokenToOperator[TK_LE] = OpStr.LE;
+    tokenToOperator[TK_GT] = OpStr.GT;
+    tokenToOperator[TK_GE] = OpStr.GE;
+    tokenToOperator[TK_EXISTS] = OpStr.EXISTS;
+    tokenToOperator[TK_IN] = OpStr.IN;
+    tokenToOperator[TK_FORALL] = OpStr.FORALL;
 
     var scan = scanner(src);
 
@@ -616,6 +644,18 @@ var Model = (function () {
           args: args
         };
         break;
+      case TK_EXISTS:
+        next();
+        return {
+          op: Model.EXISTS,
+          args: [equalExpr()]
+        };
+      case TK_FORALL:
+        next();
+        return {
+          op: Model.FORALL,
+          args: [commaExpr()]
+        };
       default:
         assert(false, "Model.primaryExpr() unexpected expression kind " + lexeme());
         e = void 0;
@@ -708,8 +748,9 @@ var Model = (function () {
       var t, expr;
       var args = [exponentialExpr()];
       // While lookahead is not a lower precedent operator
-      while((t = hd()) && !isAdditive(t) && t !== TK_COMMA && t !== TK_EQL && 
-            t !== TK_RIGHTBRACE && t !== TK_RIGHTPAREN && t !== TK_RIGHTBRACKET) {
+      while((t = hd()) && !isAdditive(t) && !isRelational(t) &&
+            t !== TK_COMMA && t !== TK_EQL && t !== TK_RIGHTBRACE &&
+            t !== TK_RIGHTPAREN && t !== TK_RIGHTBRACKET) {
         if (isMultiplicative(t)) {
           next();
         }
@@ -806,12 +847,32 @@ var Model = (function () {
       return expr;
     }
 
-    function equalExpr() {
+    function isRelational(t) {
+      return t === TK_LT || t === TK_LE || t === TK_GT || t === TK_GE ||
+             t === TK_IN;
+    }
+
+    function relationalExpr() {
       var expr = additiveExpr();
+      var t;
+      while (isRelational(t = hd())) {
+        next();
+        var expr2 = additiveExpr();
+        switch(t) {
+        default:
+          expr = {op: tokenToOperator[t], args: [expr, expr2]};
+          break;
+        }
+      }
+      return expr;
+    }
+
+    function equalExpr() {
+      var expr = relationalExpr();
       var t;
       while ((t = hd())===TK_EQL) {
         next();
-        var expr2 = additiveExpr();
+        var expr2 = relationalExpr();
         expr = {op: tokenToOperator[t], args: [expr, expr2]};
       }
       return expr;
@@ -871,6 +932,13 @@ var Model = (function () {
       lexemeToToken["\\textrm"]  = TK_TEXT;
       lexemeToToken["\\textit"]  = TK_TEXT;
       lexemeToToken["\\textbf"]  = TK_TEXT;
+      lexemeToToken["\\lt"]  = TK_LT;
+      lexemeToToken["\\le"]  = TK_LE;
+      lexemeToToken["\\gt"]  = TK_GT;
+      lexemeToToken["\\ge"]  = TK_GE;
+      lexemeToToken["\\exists"]  = TK_EXISTS;
+      lexemeToToken["\\in"]  = TK_IN;
+      lexemeToToken["\\forall"]  = TK_FORALL;
       
       var units = [
         "g",
@@ -1039,11 +1107,11 @@ var Model = (function () {
   function test() {
     trace("\nModel self testing");
     (function () {
-      var node = Model.create("\\cos (2\\theta) = \\cos^2 \\theta - \\sin^2 \\theta");
+      var node = Model.create("\\forall x \\in X, \\exists y \\lt \\epsilon");
       trace("node=" + JSON.stringify(node, null, 2));
     })();
   }
-  var RUN_SELF_TESTS = false;
+  var RUN_SELF_TESTS = true;
   if (RUN_SELF_TESTS) {
     test();
   }
