@@ -174,6 +174,9 @@ var Model = (function () {
     EXISTS: "exists",
     IN: "in",
     FORALL: "forall",
+    LIM: "lim",
+    EXP: "exp",
+    TO: "to",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -364,6 +367,9 @@ var Model = (function () {
     var TK_EXISTS = 0x112;
     var TK_IN = 0x113;
     var TK_FORALL = 0x114;
+    var TK_LIM = 0x115;
+    var TK_EXP = 0x116;
+    var TK_TO = 0x117;
 
     // Define operator strings
     var OpStr = {
@@ -401,6 +407,9 @@ var Model = (function () {
       EXISTS: "exists",
       IN: "in",
       FORALL: "forall",
+      LIM: "lim",
+      EXP: "exp",
+      TO: "to",
     };
 
     // Define mapping from token to operator
@@ -433,6 +442,9 @@ var Model = (function () {
     tokenToOperator[TK_EXISTS] = OpStr.EXISTS;
     tokenToOperator[TK_IN] = OpStr.IN;
     tokenToOperator[TK_FORALL] = OpStr.FORALL;
+    tokenToOperator[TK_LIM] = OpStr.LIM;
+    tokenToOperator[TK_EXP] = OpStr.EXP;
+    tokenToOperator[TK_TO] = OpStr.TO;
 
     var scan = scanner(src);
 
@@ -644,6 +656,19 @@ var Model = (function () {
           args: args
         };
         break;
+      case TK_LIM:
+        next();
+        var t, args = [];
+        // Collect the subscript and expression
+        eat(TK_UNDERSCORE)
+        args.push(primaryExpr());
+        args.push(primaryExpr());
+        // Finish the log function
+        return {
+          op: Model.LIM,
+          args: args
+        };
+        break;
       case TK_EXISTS:
         next();
         return {
@@ -655,6 +680,12 @@ var Model = (function () {
         return {
           op: Model.FORALL,
           args: [commaExpr()]
+        };
+      case TK_EXP:
+        next();
+        return {
+          op: Model.EXP,
+          args: [additiveExpr()]
         };
       default:
         assert(false, "Model.primaryExpr() unexpected expression kind " + lexeme());
@@ -849,7 +880,7 @@ var Model = (function () {
 
     function isRelational(t) {
       return t === TK_LT || t === TK_LE || t === TK_GT || t === TK_GE ||
-             t === TK_IN;
+             t === TK_IN || t === TK_TO;
     }
 
     function relationalExpr() {
@@ -939,6 +970,9 @@ var Model = (function () {
       lexemeToToken["\\exists"]  = TK_EXISTS;
       lexemeToToken["\\in"]  = TK_IN;
       lexemeToToken["\\forall"]  = TK_FORALL;
+      lexemeToToken["\\lim"]  = TK_LIM;
+      lexemeToToken["\\exp"]  = TK_EXP;
+      lexemeToToken["\\to"]  = TK_TO;
       
       var units = [
         "g",
@@ -1107,11 +1141,11 @@ var Model = (function () {
   function test() {
     trace("\nModel self testing");
     (function () {
-      var node = Model.create("\\forall x \\in X, \\exists y \\lt \\epsilon");
+      var node = Model.create("\\lim_{x \\to \\infty} \\exp(x) = 0");
       trace("node=" + JSON.stringify(node, null, 2));
     })();
   }
-  var RUN_SELF_TESTS = true;
+  var RUN_SELF_TESTS = false;
   if (RUN_SELF_TESTS) {
     test();
   }
