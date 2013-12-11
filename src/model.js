@@ -177,6 +177,8 @@ var Model = (function () {
     LIM: "lim",
     EXP: "exp",
     TO: "to",
+    SUM: "sum",
+    INT: "int",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -370,6 +372,8 @@ var Model = (function () {
     var TK_LIM = 0x115;
     var TK_EXP = 0x116;
     var TK_TO = 0x117;
+    var TK_SUM = 0x118;
+    var TK_INT = 0x119;
 
     // Define operator strings
     var OpStr = {
@@ -410,6 +414,8 @@ var Model = (function () {
       LIM: "lim",
       EXP: "exp",
       TO: "to",
+      SUM: "sum",
+      INT: "int",
     };
 
     // Define mapping from token to operator
@@ -445,6 +451,8 @@ var Model = (function () {
     tokenToOperator[TK_LIM] = OpStr.LIM;
     tokenToOperator[TK_EXP] = OpStr.EXP;
     tokenToOperator[TK_TO] = OpStr.TO;
+    tokenToOperator[TK_SUM] = OpStr.SUM;
+    tokenToOperator[TK_INT] = OpStr.INT;
 
     var scan = scanner(src);
 
@@ -660,12 +668,30 @@ var Model = (function () {
         next();
         var t, args = [];
         // Collect the subscript and expression
-        eat(TK_UNDERSCORE)
+        eat(TK_UNDERSCORE);
         args.push(primaryExpr());
         args.push(primaryExpr());
         // Finish the log function
         return {
-          op: Model.LIM,
+          op: tokenToOperator[tk],
+          args: args
+        };
+        break;
+      case TK_SUM:
+      case TK_INT:
+        next();
+        var t, args = [];
+        // Collect the subscript and expression
+        if (hd() === TK_UNDERSCORE) {
+          next();
+          args.push(primaryExpr());
+          eat(TK_CARET);              // If we have a subscript, then we expect a superscript
+          args.push(primaryExpr());
+        }
+        args.push(commaExpr());
+        // Finish the log function
+        return {
+          op: tokenToOperator[tk],
           args: args
         };
         break;
@@ -973,6 +999,8 @@ var Model = (function () {
       lexemeToToken["\\lim"]  = TK_LIM;
       lexemeToToken["\\exp"]  = TK_EXP;
       lexemeToToken["\\to"]  = TK_TO;
+      lexemeToToken["\\sum"]  = TK_SUM;
+      lexemeToToken["\\int"]  = TK_INT;
       
       var units = [
         "g",
@@ -1141,7 +1169,7 @@ var Model = (function () {
   function test() {
     trace("\nModel self testing");
     (function () {
-      var node = Model.create("\\lim_{x \\to \\infty} \\exp(x) = 0");
+      var node = Model.create("\\int y dx");
       trace("node=" + JSON.stringify(node, null, 2));
     })();
   }
