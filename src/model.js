@@ -179,6 +179,7 @@ var Model = (function () {
     TO: "to",
     SUM: "sum",
     INT: "int",
+    PROD: "prod",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -374,6 +375,7 @@ var Model = (function () {
     var TK_TO = 0x117;
     var TK_SUM = 0x118;
     var TK_INT = 0x119;
+    var TK_PROD = 0x11A;
 
     // Define operator strings
     var OpStr = {
@@ -416,6 +418,7 @@ var Model = (function () {
       TO: "to",
       SUM: "sum",
       INT: "int",
+      PROD: "prod",
     };
 
     // Define mapping from token to operator
@@ -453,6 +456,7 @@ var Model = (function () {
     tokenToOperator[TK_TO] = OpStr.TO;
     tokenToOperator[TK_SUM] = OpStr.SUM;
     tokenToOperator[TK_INT] = OpStr.INT;
+    tokenToOperator[TK_PROD] = OpStr.PROD;
 
     var scan = scanner(src);
 
@@ -679,6 +683,7 @@ var Model = (function () {
         break;
       case TK_SUM:
       case TK_INT:
+      case TK_PROD:
         next();
         var t, args = [];
         // Collect the subscript and expression
@@ -1001,6 +1006,7 @@ var Model = (function () {
       lexemeToToken["\\to"]  = TK_TO;
       lexemeToToken["\\sum"]  = TK_SUM;
       lexemeToToken["\\int"]  = TK_INT;
+      lexemeToToken["\\prod"]  = TK_PROD;
       
       var units = [
         "g",
