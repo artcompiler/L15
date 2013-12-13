@@ -854,6 +854,19 @@ var Model = (function () {
       }
     }
 
+/*
+    function negate(n) {
+      if (n.op === Model.SUB) {
+        return n.args[0];  // strip the unary minus
+      } else {
+        return {
+          op: Model.SUB,
+          args: [n]
+        };
+      }
+    }
+*/
+
     function negate(n) {
       if (typeof n === "number") {
         return -n;
@@ -871,16 +884,15 @@ var Model = (function () {
             }, n]
           };
         }
-      } else if (n.args.length === 2) {
-        return {
-          op: Model.SUB,
-          args: [n]
-        };
+      } else if (n.op === Model.MUL) {
+        n.args.unshift({op: Model.NUM, args: ["-1"]});
+        return n;
       }
-      assert(false, "Unhandled case in negate() op=" + n.op + " n.args.length=" + n.args.length);
       return {
-        op: Model.SUB,
-        args: [n]
+        op: Model.MUL,
+        args: [{
+          op: Model.NUM, args: ["-1"]
+        }, n]
       };
     }
 
