@@ -854,19 +854,6 @@ var Model = (function () {
       }
     }
 
-/*
-    function negate(n) {
-      if (n.op === Model.SUB) {
-        return n.args[0];  // strip the unary minus
-      } else {
-        return {
-          op: Model.SUB,
-          args: [n]
-        };
-      }
-    }
-*/
-
     function negate(n) {
       if (typeof n === "number") {
         return -n;
