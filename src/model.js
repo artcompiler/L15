@@ -1077,6 +1077,10 @@ var Model = (function () {
           case 125: // right brace
             lexeme += String.fromCharCode(c);
             return c; // char code is the token id
+          case 36:  // dollar
+          case 37:  // percent
+            lexeme += String.fromCharCode(c);
+            return TK_VAR;
           default:
             if (c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
               lexeme += String.fromCharCode(c);
@@ -1137,7 +1141,8 @@ var Model = (function () {
       function latex() {
         var c = src.charCodeAt(curIndex++);
         while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
-               c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
+               c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0) ||
+               c === '$'.charCodeAt(0) || c === '%'.charCodeAt(0)) {
           lexeme += String.fromCharCode(c);
           c = src.charCodeAt(curIndex++);
         }
