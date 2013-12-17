@@ -180,6 +180,7 @@ var Model = (function () {
     SUM: "sum",
     INT: "int",
     PROD: "prod",
+    PERCENT: "%",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -376,6 +377,7 @@ var Model = (function () {
     var TK_SUM = 0x118;
     var TK_INT = 0x119;
     var TK_PROD = 0x11A;
+    var TK_PERCENT = '%'.charCodeAt(0);
 
     // Define operator strings
     var OpStr = {
@@ -754,6 +756,23 @@ var Model = (function () {
       return e;
     }
 
+    function postfixExpr() {
+      var t;
+      var expr = primaryExpr();
+      switch (t = hd()) {
+      case TK_PERCENT:
+        next();
+        expr = {
+          op: Model.PERCENT,
+          args: [expr]
+        }
+        break;
+      default:
+        break;
+      }
+      return expr;
+    }
+
     function unaryExpr() {
       var t;
       var expr;
@@ -768,7 +787,7 @@ var Model = (function () {
         expr = {op: Model.SUB, args: [expr]};
         break;
       default:
-        expr = primaryExpr();
+        expr = postfixExpr();
         break;
       }
       return expr;
@@ -1006,6 +1025,7 @@ var Model = (function () {
       lexemeToToken["\\sum"]  = TK_SUM;
       lexemeToToken["\\int"]  = TK_INT;
       lexemeToToken["\\prod"]  = TK_PROD;
+      lexemeToToken["\\%"]  = TK_PERCENT;
       
       var units = [
         "g",
@@ -1061,6 +1081,7 @@ var Model = (function () {
             }
             lexeme = "";
             continue;  // whitespace
+          case 37:  // percent
           case 40:  // left paren
           case 41:  // right paren
           case 42:  // asterisk
@@ -1078,7 +1099,6 @@ var Model = (function () {
             lexeme += String.fromCharCode(c);
             return c; // char code is the token id
           case 36:  // dollar
-          case 37:  // percent
             lexeme += String.fromCharCode(c);
             return TK_VAR;
           default:
@@ -1140,8 +1160,11 @@ var Model = (function () {
 
       function latex() {
         var c = src.charCodeAt(curIndex++);
-        if (c === '$'.charCodeAt(0) || c === '%'.charCodeAt(0)) {
+        if (c === '$'.charCodeAt(0)) {
+          // don't include \
           lexeme = String.fromCharCode(c);
+        } else if (c === '%'.charCodeAt(0)) {
+          lexeme += String.fromCharCode(c);
         } else {
         while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
                c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
