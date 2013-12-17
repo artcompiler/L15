@@ -1140,13 +1140,16 @@ var Model = (function () {
 
       function latex() {
         var c = src.charCodeAt(curIndex++);
+        if (c === '$'.charCodeAt(0) || c === '%'.charCodeAt(0)) {
+          lexeme = String.fromCharCode(c);
+        } else {
         while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
-               c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0) ||
-               c === '$'.charCodeAt(0) || c === '%'.charCodeAt(0)) {
+               c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
           lexeme += String.fromCharCode(c);
           c = src.charCodeAt(curIndex++);
         }
         curIndex--;
+        }
 
         var tk = lexemeToToken[lexeme];
         if (tk === void 0) {
