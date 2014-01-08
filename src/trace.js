@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-var TRACE = false;
+var TRACE = true;
 var global = this;
 var trace = (function () {
   return !TRACE ?
