@@ -571,34 +571,14 @@ var Model = (function () {
           break;
         case TK_LEFTBRACE:
           var base = braceExpr();
-          if (base.op === Model.POW) {
-            // Merge exponents
-            // \sqrt{x^2} -> x^(2*2^-1)
-            e = {
-              op: Model.POW,
-              args: [
-                base.args[0], {
-                  op: Model.MUL,
-                  args: [
-                    base.args[1], {
-                      op: Model.POW,
-                      args: [
-                        {op: Model.NUM, args: ["2"]},
-                        {op: Model.NUM, args: ["-1"]}
-                      ]
-                    }
-                  ]
-                }
-              ]};
-          } else {
-            e = {
-              op: Model.POW,
-              args: [
-                base,
-                {op: Model.NUM, args: ["2"]},
-                {op: Model.NUM, args: ["-1"]}
-              ]};
-          }
+          e = {
+            op: Model.POW,
+            args: [
+              base,
+              {op: Model.NUM, args: ["2"]},
+              {op: Model.NUM, args: ["-1"]}
+            ]
+          };
           break;
         default:
           assert(false, message(1001, ["{ or (", String.fromCharCode(hd())]));
