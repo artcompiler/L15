@@ -586,13 +586,16 @@ var Model = (function () {
       var op;
       switch ((tk=hd())) {
       case 'A'.charCodeAt(0):
-      case TK_VAR:
-        e = {op: "var", args: [lexeme()]};
-        next();
-        break;
       case 'a'.charCodeAt(0):
-        e = {op: "var", args: [lexeme()]};
+      case TK_VAR:
+        var args = [lexeme()];
         next();
+        // Collect the subscript if there is one
+        if ((t=hd())===TK_UNDERSCORE) {
+          next();
+          args.push(primaryExpr());   // {op:VAR, args:["Fe", "2"]}
+        }
+        e = {op: "var", args: args};
         break;
       case TK_NUM:
         e = {op: "num", args: [lexeme()]};
