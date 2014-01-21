@@ -195,6 +195,7 @@ var Model = (function () {
     PROD: "prod",
     PERCENT: "%",
     M: "M",
+    RIGHTARROW: "->",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -395,51 +396,7 @@ var Model = (function () {
     var TK_PROD = 0x11A;
     var TK_PERCENT = '%'.charCodeAt(0);
     var TK_M = 0x11B;
-
-    // Define operator strings
-    var OpStr = {
-      ADD: "+",
-      SUB: "-",
-      MUL: "times",
-      DIV: "div",
-      FRAC: "frac",
-      EQL: "=",
-      ATAN2: "atan2",
-      SQRT: "sqrt",
-      PM: "pm",
-      SIN: "sin",
-      COS: "cos",
-      TAN: "tan",
-      SEC: "sec",
-      COT: "cot",
-      CSC: "csc",
-      LN: "ln",
-      LG: "lg",
-      LOG: "log",
-      VAR: "var",
-      CST: "cst",
-      COMMA: ",",
-      POW: "^",
-      SUBSCRIPT: "_",
-      ABS: "abs",
-      PAREN: "()",
-      HIGHLIGHT: "hi",
-      TEXT: "text",
-      LT: "lt",
-      LE: "le",
-      GT: "gt",
-      GE: "ge",
-      EXISTS: "exists",
-      IN: "in",
-      FORALL: "forall",
-      LIM: "lim",
-      EXP: "exp",
-      TO: "to",
-      SUM: "sum",
-      INT: "int",
-      PROD: "prod",
-      M: "M",
-    };
+    var TK_RIGHTARROW = 0x11C;
 
     // Define mapping from token to operator
     var tokenToOperator = [];
@@ -478,6 +435,7 @@ var Model = (function () {
     tokenToOperator[TK_INT] = OpStr.INT;
     tokenToOperator[TK_PROD] = OpStr.PROD;
     tokenToOperator[TK_M] = OpStr.M;
+    tokenToOperator[TK_RIGHTARROW] = OpStr.RIGHTARROW;
 
     function numberNode(n, doScale, roundOnly) {
       // doScale - scale n if true
@@ -885,9 +843,11 @@ var Model = (function () {
       var t, expr;
       var args = [exponentialExpr()];
       // While lookahead is not a lower precedent operator
+      // FIXME need a better way to organize this condition
       while((t = hd()) && !isAdditive(t) && !isRelational(t) &&
             t !== TK_COMMA && t !== TK_EQL && t !== TK_RIGHTBRACE &&
-            t !== TK_RIGHTPAREN && t !== TK_RIGHTBRACKET) {
+            t !== TK_RIGHTPAREN && t !== TK_RIGHTBRACKET &&
+            t !== TK_RIGHTARROW) {
         if (isMultiplicative(t)) {
           next();
         }
@@ -1017,7 +977,7 @@ var Model = (function () {
     function equalExpr() {
       var expr = relationalExpr();
       var t;
-      while ((t = hd())===TK_EQL) {
+      while ((t = hd()) === TK_EQL || t === TK_RIGHTARROW) {
         next();
         var expr2 = relationalExpr();
         expr = {op: tokenToOperator[t], args: [expr, expr2]};
@@ -1095,6 +1055,7 @@ var Model = (function () {
       lexemeToToken["\\prod"]  = TK_PROD;
       lexemeToToken["\\%"]  = TK_PERCENT;
       lexemeToToken["\\M"]   = TK_M;
+      lexemeToToken["\\rightarrow"]   = TK_RIGHTARROW;
 
       var identifiers = keys(env);
       return {
