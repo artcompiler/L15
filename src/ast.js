@@ -135,7 +135,7 @@ var Ast = (function () {
     var args = "";
     var args_nids = [ ];
     for (var i=0; i < count; i++) {
-      if (node.op === "str" || node.op === "num" || node.op === "var") {
+      if (node.op === "str" || node.op === "num") {
         args += args_nids[i] = node.args[i];
       } else {
         args += args_nids[i] = intern(node.args[i]);
@@ -162,7 +162,6 @@ var Ast = (function () {
     switch (n.op) {
     case "num":
     case "str":
-    case "var":
       n = n;
       break;
     default:
