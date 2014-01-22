@@ -833,7 +833,8 @@ var Model = (function () {
       while ((t=hd())===TK_CARET) {
         next();
         var t;
-        if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
+        if (isChemCore() && isChemSymbol(args[0]) &&
+            ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // Na^+
           args.push(unaryNode(t, [numberNode(1)]));
@@ -857,6 +858,14 @@ var Model = (function () {
       } else {
         return args[0];
       }
+    }
+
+    function isChemSymbol(n) {
+      if (n.op !== Model.VAR) {
+        return false;
+      }
+      var sym = Model.env[n.args[0]];
+      return sym.mass ? true : false;
     }
 
     function multiplicativeExpr() {
@@ -886,7 +895,8 @@ var Model = (function () {
         args.push(expr);
       }
       if (args.length > 1) {
-        if (isChemCore()) {
+        if (isChemCore() && isChemSymbol(args[1])) {
+          // 2NaCl NaCl
           if (args[0].op === Model.NUM) {
             // 2NaCl
             var coeff = args.shift();
@@ -1109,8 +1119,14 @@ var Model = (function () {
           case 43:  // plus
           case 44:  // comma
           case 45:  // dash
+            if (src.charCodeAt(curIndex) === 62) {
+              curIndex++;
+              return TK_RIGHTARROW;
+            }
           case 47:  // slash
+          case 60:  // left angle
           case 61:  // equal
+          case 62:  // right angle
           case 91:  // left bracket
           case 93:  // right bracket
           case 94:  // caret
