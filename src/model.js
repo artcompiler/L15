@@ -884,7 +884,7 @@ var Model = (function () {
       while((t = hd()) && !isAdditive(t) && !isRelational(t) &&
             t !== TK_COMMA && t !== TK_EQL && t !== TK_RIGHTBRACE &&
             t !== TK_RIGHTPAREN && t !== TK_RIGHTBRACKET &&
-            t !== TK_RIGHTARROW) {
+            t !== TK_RIGHTARROW && t != TK_LT) {
         if (isMultiplicative(t)) {
           next();
         }
@@ -1096,7 +1096,6 @@ var Model = (function () {
       lexemeToToken["\\int"]  = TK_INT;
       lexemeToToken["\\prod"]  = TK_PROD;
       lexemeToToken["\\%"]  = TK_PERCENT;
-      lexemeToToken["\\M"]   = TK_M;
       lexemeToToken["\\rightarrow"]   = TK_RIGHTARROW;
 
       var identifiers = keys(env);
@@ -1136,9 +1135,7 @@ var Model = (function () {
               return TK_RIGHTARROW;
             }
           case 47:  // slash
-          case 60:  // left angle
           case 61:  // equal
-          case 62:  // right angle
           case 91:  // left bracket
           case 93:  // right bracket
           case 94:  // caret
@@ -1150,6 +1147,18 @@ var Model = (function () {
           case 36:  // dollar
             lexeme += String.fromCharCode(c);
             return TK_VAR;
+          case 60:  // left angle
+            if (src.charCodeAt(curIndex) === 61) { // equals
+              curIndex++;
+              return TK_LE;
+            }
+            return TK_LT;
+          case 62:  // right angle
+            if (src.charCodeAt(curIndex) === 61) { // equals
+              curIndex++;
+              return TK_GE;
+            }
+            return TK_GT;
           default:
             if (c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0) ||
                 c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0)) {
