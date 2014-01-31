@@ -366,6 +366,7 @@ var Model = (function () {
     var TK_FRAC = 0x100;
     var TK_LN = 0x107;
     var TK_LEFTBRACE = '{'.charCodeAt(0);
+    var TK_VERTICALBAR = '|'.charCodeAt(0);
     var TK_LEFTBRACKET = '['.charCodeAt(0);
     var TK_LEFTPAREN = '('.charCodeAt(0);
     var TK_MUL = '*'.charCodeAt(0);
@@ -571,6 +572,9 @@ var Model = (function () {
       case TK_LEFTBRACE:
         e = braceExpr();
         break;
+      case TK_VERTICALBAR:
+        e = absExpr();
+        break;
       case TK_FRAC:
         next();
         var expr1 = braceExpr();
@@ -747,6 +751,13 @@ var Model = (function () {
       return e;
     }
 
+    function absExpr() {
+      eat(TK_VERTICALBAR);
+      var e = additiveExpr();
+      eat(TK_VERTICALBAR);
+      return unaryNode(Model.ABS, [e]);
+    }
+
     function braceExpr() {
       eat(TK_LEFTBRACE);
       var e = commaExpr();
@@ -884,7 +895,7 @@ var Model = (function () {
       while((t = hd()) && !isAdditive(t) && !isRelational(t) &&
             t !== TK_COMMA && t !== TK_EQL && t !== TK_RIGHTBRACE &&
             t !== TK_RIGHTPAREN && t !== TK_RIGHTBRACKET &&
-            t !== TK_RIGHTARROW && t != TK_LT) {
+            t !== TK_RIGHTARROW && t !== TK_LT && t !== TK_VERTICALBAR) {
         if (isMultiplicative(t)) {
           next();
         }
@@ -1141,6 +1152,7 @@ var Model = (function () {
           case 94:  // caret
           case 95:  // underscore
           case 123: // left brace
+          case 124: // vertical bar
           case 125: // right brace
             lexeme += String.fromCharCode(c);
             return c; // char code is the token id
