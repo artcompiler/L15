@@ -201,6 +201,7 @@ var Model = (function () {
     PERCENT: "%",
     M: "M",
     RIGHTARROW: "->",
+    BANG: "!",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -403,6 +404,7 @@ var Model = (function () {
     var TK_PERCENT = '%'.charCodeAt(0);
     var TK_M = 0x11B;
     var TK_RIGHTARROW = 0x11C;
+    var TK_BANG = '!'.charCodeAt(0);
 
     // Define mapping from token to operator
     var tokenToOperator = [];
@@ -442,6 +444,7 @@ var Model = (function () {
     tokenToOperator[TK_PROD] = OpStr.PROD;
     tokenToOperator[TK_M] = OpStr.M;
     tokenToOperator[TK_RIGHTARROW] = OpStr.RIGHTARROW;
+    tokenToOperator[TK_BANG] = OpStr.BANG;
 
     function numberNode(n, doScale, roundOnly) {
       // doScale - scale n if true
@@ -797,6 +800,13 @@ var Model = (function () {
           args: [expr]
         }
         break;
+      case TK_BANG:
+        next();
+        expr = {
+          op: Model.BANG,
+          args: [expr]
+        }
+        break;
       default:
         break;
       }
@@ -812,9 +822,10 @@ var Model = (function () {
         expr = unaryExpr();
         break;
       case TK_SUB:
+      case TK_PM:
         next();
         expr = unaryExpr();
-        expr = {op: Model.SUB, args: [expr]};
+        expr = {op: tokenToOperator[t], args: [expr]};
         break;
       default:
         expr = postfixExpr();
@@ -1134,17 +1145,18 @@ var Model = (function () {
             }
             lexeme = "";
             continue;  // whitespace
+          case 45:  // dash
+            if (src.charCodeAt(curIndex) === 62) {
+              curIndex++;
+              return TK_RIGHTARROW;
+            }
+          case 33:  // bang, exclamation point
           case 37:  // percent
           case 40:  // left paren
           case 41:  // right paren
           case 42:  // asterisk
           case 43:  // plus
           case 44:  // comma
-          case 45:  // dash
-            if (src.charCodeAt(curIndex) === 62) {
-              curIndex++;
-              return TK_RIGHTARROW;
-            }
           case 47:  // slash
           case 61:  // equal
           case 91:  // left bracket
@@ -1219,6 +1231,12 @@ var Model = (function () {
           if (!match) {
             break;
           }
+          lexeme += ch;
+        }
+        // Scan trailing primes (')
+        while (c === "'".charCodeAt(0)) {
+          c = src.charCodeAt(curIndex++);
+          var ch = String.fromCharCode(c);
           lexeme += ch;
         }
         curIndex--;
