@@ -855,7 +855,7 @@ var Model = (function () {
       while ((t=hd())===TK_CARET) {
         next();
         var t;
-        if (isChemCore() && isChemSymbol(args[0]) &&
+        if ((isMathSymbol(args[0]) || isChemCore() && isChemSymbol(args[0])) &&
             ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // Na^+
@@ -887,7 +887,15 @@ var Model = (function () {
         return false;
       }
       var sym = Model.env[n.args[0]];
-      return sym.mass ? true : false;
+      return sym && sym.mass ? true : false;
+    }
+
+    function isMathSymbol(n) {
+      if (n.op !== Model.VAR) {
+        return false;
+      }
+      var sym = Model.env[n.args[0]];
+      return sym && sym.name ? true : false;    // This is somewhat ad hoc, update as needed
     }
 
     function isVar(n, id) {
