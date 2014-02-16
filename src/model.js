@@ -55,8 +55,9 @@
   plugins, as follows:
 
 */
-
+"use strict";
 var Model = (function () {
+
   function error(str) {
     trace("error: " + str);
   }
@@ -207,7 +208,7 @@ var Model = (function () {
   forEach(keys(OpStr), function (v, i) {
     Model[v] = OpStr[v];
   });
-    
+
   var OpToLaTeX = {};
   OpToLaTeX[OpStr.ADD] = "+";
   OpToLaTeX[OpStr.SUB] = "-";
@@ -348,7 +349,7 @@ var Model = (function () {
     else {
       assert(false, "invalid expression type");
     }
-    
+
     return text;
   }
 
@@ -524,7 +525,7 @@ var Model = (function () {
         T0 = scan.start();
       }
     }
-    
+
     function replace (t) {
       T0 = t;
     }
@@ -538,7 +539,7 @@ var Model = (function () {
       }
       next();
     }
-    
+
     function match (tc) {
       var tk = hd();
       if (tk !== tc)
@@ -776,6 +777,7 @@ var Model = (function () {
     }
 
     function parenExpr(tk) {
+      var tk2;
       eat(tk);
       var e = commaExpr();
       eat(tk2 = hd() === TK_RIGHTPAREN ? TK_RIGHTPAREN : TK_RIGHTBRACKET);
@@ -818,7 +820,7 @@ var Model = (function () {
       var expr;
       switch (t = hd()) {
       case TK_ADD:
-        next();        
+        next();
         expr = unaryExpr();
         break;
       case TK_SUB:
@@ -1215,7 +1217,7 @@ var Model = (function () {
           c = src.charCodeAt(curIndex++);
         }
         curIndex--;
-        
+
         return TK_NUM;
       }
 
