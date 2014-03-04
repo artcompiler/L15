@@ -1034,11 +1034,21 @@ var Model = (function () {
     }
 
     function relationalExpr() {
-      var expr = additiveExpr();
-      var t;
+      var t = hd();
+      if (isRelational(t)) {
+        // Leading '=' so synthesize a variable.
+        var expr = {op: Model.VAR, args: ["_"]};
+      } else {
+        var expr = additiveExpr();
+      }
       while (isRelational(t = hd())) {
         next();
-        var expr2 = additiveExpr();
+        if (hd() === 0) {
+          // Leading '=' so synthesize a variable.
+          var expr2 = {op: Model.VAR, args: ["_"]};
+        } else {
+          var expr2 = additiveExpr();
+        }
         switch(t) {
         default:
           expr = {op: tokenToOperator[t], args: [expr, expr2]};
@@ -1049,11 +1059,21 @@ var Model = (function () {
     }
 
     function equalExpr() {
-      var expr = relationalExpr();
+      if (hd() === TK_EQL) {
+        // Leading '=' so synthesize a variable.
+        var expr = {op: Model.VAR, args: ["_"]};
+      } else {
+        var expr = relationalExpr();
+      }
       var t;
       while ((t = hd()) === TK_EQL || t === TK_RIGHTARROW) {
         next();
-        var expr2 = relationalExpr();
+        if (hd() === 0) {
+          // Leading '=' so synthesize a variable.
+          var expr2 = {op: Model.VAR, args: ["_"]};
+        } else {
+          var expr2 = equalExpr();
+        }
         expr = {op: tokenToOperator[t], args: [expr, expr2]};
       }
       return expr;
