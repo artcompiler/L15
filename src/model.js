@@ -202,7 +202,7 @@ var Model = (function () {
     PERCENT: "%",
     M: "M",
     RIGHTARROW: "->",
-    BANG: "!",
+    FACT: "fact",
     BINOM: "binom",
   };
 
@@ -451,7 +451,7 @@ var Model = (function () {
     tokenToOperator[TK_PROD] = OpStr.PROD;
     tokenToOperator[TK_M] = OpStr.M;
     tokenToOperator[TK_RIGHTARROW] = OpStr.RIGHTARROW;
-    tokenToOperator[TK_BANG] = OpStr.BANG;
+    tokenToOperator[TK_BANG] = OpStr.FACT;
     tokenToOperator[TK_BINOM] = OpStr.BINOM;
 
     function numberNode(n, doScale, roundOnly) {
@@ -610,6 +610,25 @@ var Model = (function () {
         e = {
           op: Model.BINOM,
           args: [expr1, expr2]
+        };
+        var num = unaryNode(Model.FACT, [expr1]);
+        var den = binaryNode(Model.MUL, [
+          unaryNode(Model.FACT, [expr2]),
+          unaryNode(Model.FACT, [binaryNode(Model.ADD, [
+            expr1,
+            negate(expr2)])])
+          ]);
+        e = {
+          op: Model.MUL,
+          args: [num, {
+            op: Model.POW,
+            args: [
+              den, {
+                op: Model.NUM,
+                args: ["-1"]
+              }
+            ]
+          }]
         };
         break;
       case TK_SQRT:
@@ -821,7 +840,7 @@ var Model = (function () {
       case TK_BANG:
         next();
         expr = {
-          op: Model.BANG,
+          op: Model.FACT,
           args: [expr]
         }
         break;
