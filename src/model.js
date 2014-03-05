@@ -203,6 +203,7 @@ var Model = (function () {
     M: "M",
     RIGHTARROW: "->",
     BANG: "!",
+    BINOM: "binom",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -229,6 +230,7 @@ var Model = (function () {
   OpToLaTeX[OpStr.LN] = "\\ln";
   OpToLaTeX[OpStr.COMMA] = ",";
   OpToLaTeX[OpStr.M] = "\\M";
+  OpToLaTeX[OpStr.BINOM] = "\\binom";
 
   // Render an AST to LaTex
   var render = function render(n) {
@@ -288,6 +290,9 @@ var Model = (function () {
         break;
       case OpStr.FRAC:
         text = "\\dfrac{" + args[0] + "}{" + args[1] + "}";
+        break;
+      case OpStr.BINOM:
+        text = "\\binom{" + args[0] + "}{" + args[1] + "}";
         break;
       case OpStr.SQRT:
         switch (args.length) {
@@ -406,6 +411,7 @@ var Model = (function () {
     var TK_M = 0x11B;
     var TK_RIGHTARROW = 0x11C;
     var TK_BANG = '!'.charCodeAt(0);
+    var TK_BINOM = 0x11D;
 
     // Define mapping from token to operator
     var tokenToOperator = [];
@@ -446,6 +452,7 @@ var Model = (function () {
     tokenToOperator[TK_M] = OpStr.M;
     tokenToOperator[TK_RIGHTARROW] = OpStr.RIGHTARROW;
     tokenToOperator[TK_BANG] = OpStr.BANG;
+    tokenToOperator[TK_BINOM] = OpStr.BINOM;
 
     function numberNode(n, doScale, roundOnly) {
       // doScale - scale n if true
@@ -594,6 +601,15 @@ var Model = (function () {
               }
             ]
           }]
+        };
+        break;
+      case TK_BINOM:
+        next();
+        var expr1 = braceExpr();
+        var expr2 = braceExpr();
+        e = {
+          op: Model.BINOM,
+          args: [expr1, expr2]
         };
         break;
       case TK_SQRT:
@@ -1149,6 +1165,7 @@ var Model = (function () {
       lexemeToToken["\\prod"]  = TK_PROD;
       lexemeToToken["\\%"]  = TK_PERCENT;
       lexemeToToken["\\rightarrow"]   = TK_RIGHTARROW;
+      lexemeToToken["\\binom"]   = TK_BINOM;
 
       var identifiers = keys(env);
       return {
