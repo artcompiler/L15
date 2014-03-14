@@ -206,6 +206,7 @@ var Model = (function () {
     BINOM: "binom",
     ROW: "row",
     COL: "col",
+    COLON: "colon",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -233,6 +234,7 @@ var Model = (function () {
   OpToLaTeX[OpStr.COMMA] = ",";
   OpToLaTeX[OpStr.M] = "\\M";
   OpToLaTeX[OpStr.BINOM] = "\\binom";
+  OpToLaTeX[OpStr.COLON] = "\\colon";
 
   // Render an AST to LaTex
   var render = function render(n) {
@@ -418,6 +420,7 @@ var Model = (function () {
     var TK_NEWCOL = 0x11F;
     var TK_BEGIN = 0x120;
     var TK_END = 0x121;
+    var TK_COLON = ':'.charCodeAt(0);
 
     // Define mapping from token to operator
     var tokenToOperator = [];
@@ -461,6 +464,7 @@ var Model = (function () {
     tokenToOperator[TK_BINOM] = OpStr.BINOM;
     tokenToOperator[TK_NEWROW] = OpStr.ROW;
     tokenToOperator[TK_NEWCOL] = OpStr.COL;
+    tokenToOperator[TK_COLON] = OpStr.COLON;
 
     function numberNode(n, doScale, roundOnly) {
       // doScale - scale n if true
@@ -1084,7 +1088,7 @@ var Model = (function () {
 
     function isRelational(t) {
       return t === TK_LT || t === TK_LE || t === TK_GT || t === TK_GE ||
-             t === TK_IN || t === TK_TO;
+             t === TK_IN || t === TK_TO || t === TK_COLON;
     }
 
     function relationalExpr() {
@@ -1237,6 +1241,7 @@ var Model = (function () {
       lexemeToToken["\\binom"] = TK_BINOM;
       lexemeToToken["\\begin"] = TK_BEGIN;
       lexemeToToken["\\end"] = TK_END;
+      lexemeToToken["\\colon"] = TK_COLON;
 
       var identifiers = keys(env);
       return {
@@ -1282,6 +1287,7 @@ var Model = (function () {
           case 43:  // plus
           case 44:  // comma
           case 47:  // slash
+          case 58:  // colon
           case 61:  // equal
           case 91:  // left bracket
           case 93:  // right bracket
