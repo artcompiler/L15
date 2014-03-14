@@ -1309,7 +1309,8 @@ var Model = (function () {
             return TK_GT;
           default:
             if (c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0) ||
-                c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0)) {
+                c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
+                c === "'".charCodeAt(0)) {
               return variable(c);
             } else if (c === '.'.charCodeAt(0) ||
                        c >= '0'.charCodeAt(0) && c <= '9'.charCodeAt(0)) {
@@ -1331,7 +1332,6 @@ var Model = (function () {
           c = src.charCodeAt(curIndex++);
         }
         curIndex--;
-
         return TK_NUM;
       }
 
@@ -1345,7 +1345,8 @@ var Model = (function () {
         // All single character names are valid variable lexemes. Now we check
         // for longer matches against unit names. The longest one wins.
         while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
-               c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
+               c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0) ||
+               c === "'".charCodeAt(0)) {
           c = src.charCodeAt(curIndex++);
           var ch = String.fromCharCode(c);
           var prefix = lexeme + ch;
@@ -1357,7 +1358,8 @@ var Model = (function () {
           }
           lexeme += ch;
         }
-        // Scan trailing primes (')
+        // Scan trailing primes ('). This handles single character identifier
+        // with trailing primes.
         while (c === "'".charCodeAt(0)) {
           c = src.charCodeAt(curIndex++);
           var ch = String.fromCharCode(c);
