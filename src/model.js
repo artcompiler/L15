@@ -363,7 +363,6 @@ var Model = (function () {
   }
 
   var parse = function parse(src, env) {
-
     // Define lexical tokens
     var TK_NONE = 0;
     var TK_ADD = '+'.charCodeAt(0);
@@ -421,10 +420,9 @@ var Model = (function () {
     var TK_BEGIN = 0x120;
     var TK_END = 0x121;
     var TK_COLON = ':'.charCodeAt(0);
-
-    // Define mapping from token to operator
-    var tokenToOperator = [];
     var T0 = TK_NONE, T1 = TK_NONE;
+    // Define mapping from token to operator
+    var tokenToOperator = {};
     tokenToOperator[TK_FRAC] = OpStr.FRAC;
     tokenToOperator[TK_SQRT] = OpStr.SQRT;
     tokenToOperator[TK_ADD] = OpStr.ADD;
@@ -465,7 +463,7 @@ var Model = (function () {
     tokenToOperator[TK_NEWROW] = OpStr.ROW;
     tokenToOperator[TK_NEWCOL] = OpStr.COL;
     tokenToOperator[TK_COLON] = OpStr.COLON;
-
+    // Construct a number node.
     function numberNode(n, doScale, roundOnly) {
       // doScale - scale n if true
       // roundOnly - only scale if rounding
@@ -481,11 +479,11 @@ var Model = (function () {
         args: [n.toString()]
       }
     }
-
+    // Construct a multiply node.
     function multiplyNode(args, flatten) {
       return binaryNode(Model.MUL, args, flatten);
     }
-
+    // Construct a unary node.
     function unaryNode(op, args) {
       assert(args.length === 1, "Wrong number of arguments for unary node");
       if (op === Model.ADD) {
@@ -497,7 +495,7 @@ var Model = (function () {
         };
       }
     }
-
+    // Construct a binary node.
     function binaryNode(op, args, flatten) {
       assert(args.length > 1, "Too few argument for binary node");
       var aa = [];
@@ -513,43 +511,33 @@ var Model = (function () {
         args: aa
       };
     }
-
+    //
+    // PARSER
+    //
+    // Manage the token stream.
     var scan = scanner(src);
-
+    // Prime the token stream.
     function start() {
       T0 = scan.start();
     }
-
-    function hd () {
-      //assert(T0!==0, "hd() T0===0");
+    // Get the current token.
+    function hd() {
       return T0;
     }
-
-    function lexeme () {
+    // Get the current lexeme.
+    function lexeme() {
       return scan.lexeme();
     }
-
-    function matchToken (t) {
-      if (T0 == t) {
-        next();
-        return true;
-      }
-      return false;
-    }
-
-    function next () {
+    // Advance the next token.
+    function next() {
       T0 = T1;
       T1 = TK_NONE;
       if (T0 === TK_NONE) {
         T0 = scan.start();
       }
     }
-
-    function replace (t) {
-      T0 = t;
-    }
-
-    function eat (tc) {
+    // Consume the current token if it matches, otherwise throw.
+    function eat(tc) {
       var tk = hd();
       if (tk !== tc) {
         var expected = String.fromCharCode(tc);
@@ -558,15 +546,7 @@ var Model = (function () {
       }
       next();
     }
-
-    function match (tc) {
-      var tk = hd();
-      if (tk !== tc)
-        return false;
-      next();
-      return true;
-    }
-
+    // Begin parsing functions.
     function primaryExpr () {
       var e;
       var tk;
@@ -798,28 +778,59 @@ var Model = (function () {
       }
       return e;
     }
-
+    // Parse '1 & 2 & 3 \\ a & b & c'
+    function matrixExpr( ) {
+      var args = [];
+      var node, t;
+      args.push(rowExpr());
+      while ((t = hd()) === TK_NEWROW) {
+        next();
+        args.push(rowExpr());
+      }
+      if (args.length > 1) {
+        node = {op: tokenToOperator[TK_NEWROW], args: args};
+      } else {
+        node = args[0];
+      }
+      return node;
+    }
+    // Parse '1 & 2 & 3'
+    function rowExpr( ) {
+      var args = [];
+      var t;
+      args.push(equalExpr());
+      while ((t = hd()) === TK_NEWCOL) {
+        next();
+        args.push(equalExpr());
+      }
+      if (args.length > 1) {
+        return {op: tokenToOperator[TK_NEWCOL], args: args};
+      } else {
+        return args[0];
+      }
+    }
+    // Parse '| expr |'
     function absExpr() {
       eat(TK_VERTICALBAR);
       var e = additiveExpr();
       eat(TK_VERTICALBAR);
       return unaryNode(Model.ABS, [e]);
     }
-
+    // Parse '{ expr }'
     function braceExpr() {
       eat(TK_LEFTBRACE);
       var e = commaExpr();
       eat(TK_RIGHTBRACE);
       return e;
     }
-
+    // Parse '[ expr ]'
     function bracketExpr() {
       eat(TK_LEFTBRACKET);
       var e = commaExpr();
       eat(TK_RIGHTBRACKET);
       return e;
     }
-
+    // Parse '( expr )'
     function parenExpr(tk) {
       var tk2;
       eat(tk);
@@ -834,7 +845,7 @@ var Model = (function () {
       e.rbrk = tk2;
       return e;
     }
-
+    // Parse '10%', '4!'
     function postfixExpr() {
       var t;
       var expr = primaryExpr();
@@ -858,7 +869,7 @@ var Model = (function () {
       }
       return expr;
     }
-
+    // Parse '+x', '\pm y'
     function unaryExpr() {
       var t;
       var expr;
@@ -879,7 +890,7 @@ var Model = (function () {
       }
       return expr;
     }
-
+    // Parse 'x_2'
     function subscriptExpr() {
       var t, args = [unaryExpr()];
       while ((t=hd())===TK_UNDERSCORE) {
@@ -895,7 +906,7 @@ var Model = (function () {
         return args[0];
       }
     }
-
+    // Parse 'x^2'
     function exponentialExpr() {
       var t, args = [subscriptExpr()];
       while ((t=hd())===TK_CARET) {
@@ -927,15 +938,15 @@ var Model = (function () {
         return args[0];
       }
     }
-
+    //
     function isChemSymbol(n) {
       if (n.op !== Model.VAR) {
         return false;
       }
       var sym = Model.env[n.args[0]];
-      return sym && sym.mass ? true : false;
+      return sym && sym.mass ? true : false;   // Has mass so must be (?) a chem symbol.
     }
-
+    //
     function isMathSymbol(n) {
       if (n.op !== Model.VAR) {
         return false;
@@ -943,7 +954,7 @@ var Model = (function () {
       var sym = Model.env[n.args[0]];
       return sym && sym.name ? true : false;    // This is somewhat ad hoc, update as needed
     }
-
+    //
     function isVar(n, id) {
       assert(typeof id === "undefined" || typeof id === "string", "Internal error in 'isVar()'");
       if (n.op !== Model.VAR) {
@@ -951,7 +962,7 @@ var Model = (function () {
       }
       return n === undefined ? true : n.args[0] === id;
     }
-
+    // Parse 'a \times b', 'a * b'
     function multiplicativeExpr() {
       var t, expr;
       var args = [exponentialExpr()];
@@ -1003,12 +1014,12 @@ var Model = (function () {
       } else {
         return args[0];
       }
-
+      //
       function isMultiplicative(t) {
         return t === TK_MUL || t === TK_DIV;
       }
     }
-
+    //
     function isNeg(n) {
       if (typeof n === "number") {
         return n < 0;
@@ -1018,7 +1029,7 @@ var Model = (function () {
         return n.op===OpStr.MUL && isNeg(n.args[0]);  // leading term is neg
       }
     }
-
+    // Return the numeric inverse of the argument.
     function negate(n) {
       if (typeof n === "number") {
         return -n;
@@ -1047,11 +1058,11 @@ var Model = (function () {
         }, n]
       };
     }
-
+    //
     function isAdditive(t) {
       return t === TK_ADD || t === TK_SUB || t === TK_PM;
     }
-
+    // Parse 'a + b'
     function additiveExpr() {
       var expr = multiplicativeExpr();
       var t;
@@ -1072,12 +1083,12 @@ var Model = (function () {
       }
       return expr;
     }
-
+    //
     function isRelational(t) {
       return t === TK_LT || t === TK_LE || t === TK_GT || t === TK_GE ||
              t === TK_IN || t === TK_TO || t === TK_COLON;
     }
-
+    // Parse 'x < y'
     function relationalExpr() {
       var t = hd();
       if (isRelational(t)) {
@@ -1102,7 +1113,7 @@ var Model = (function () {
       }
       return expr;
     }
-
+    // Parse 'x = 10'
     function equalExpr() {
       if (hd() === TK_EQL) {
         // Leading '=' so synthesize a variable.
@@ -1123,7 +1134,7 @@ var Model = (function () {
       }
       return expr;
     }
-
+    // Parse 'a, b, c, d'
     function commaExpr( ) {
       var expr = equalExpr();
       var args = [expr];
@@ -1138,105 +1149,80 @@ var Model = (function () {
         return expr;
       }
     }
-
-    function rowExpr( ) {
-      var args = [];
-      var t;
-      args.push(equalExpr());
-      while ((t = hd()) === TK_NEWCOL) {
-        next();
-        args.push(equalExpr());
-      }
-      if (args.length > 1) {
-        return {op: tokenToOperator[TK_NEWCOL], args: args};
-      } else {
-        return args[0];
-      }
-    }
-
-    function matrixExpr( ) {
-      var args = [];
-      var node, t;
-      args.push(rowExpr());
-      while ((t = hd()) === TK_NEWROW) {
-        next();
-        args.push(rowExpr());
-      }
-      if (args.length > 1) {
-        node = {op: tokenToOperator[TK_NEWROW], args: args};
-      } else {
-        node = args[0];
-      }
-      return node;
-    }
-
+    // Root syntax.
     function expr() {
       start();
       var n = commaExpr();
       assert(!hd(), message(1003, [scan.pos(), scan.lexeme()]));
       return n;
     }
-
+    // Return a parser object.
+    return {
+      expr : expr
+    };
+    //
+    // SCANNER
+    //
+    // Find tokens in the input stream.
+    //
     function scanner(src) {
-
       var curIndex = 0;
       var lexeme = "";
-
-      var lexemeToToken = [ ];
-
-      lexemeToToken["\\cdot"] = TK_MUL;
-      lexemeToToken["\\times"] = TK_MUL;
-      lexemeToToken["\\div"] = TK_DIV;
-      lexemeToToken["\\dfrac"] = TK_FRAC;
-      lexemeToToken["\\frac"] = TK_FRAC;
-      lexemeToToken["\\sqrt"] = TK_SQRT;
-      lexemeToToken["\\pm"] = TK_PM;
-      lexemeToToken["\\sin"] = TK_SIN;
-      lexemeToToken["\\cos"] = TK_COS;
-      lexemeToToken["\\tan"] = TK_TAN;
-      lexemeToToken["\\sec"] = TK_SEC;
-      lexemeToToken["\\cot"] = TK_COT;
-      lexemeToToken["\\csc"] = TK_CSC;
-      lexemeToToken["\\ln"] = TK_LN;
-      lexemeToToken["\\lg"] = TK_LG;
-      lexemeToToken["\\log"] = TK_LOG;
-      lexemeToToken["\\left"] = null;  // whitespace
-      lexemeToToken["\\right"] = null;
-      lexemeToToken["\\big"] = null;
-      lexemeToToken["\\Big"] = null;
-      lexemeToToken["\\bigg"] = null;
-      lexemeToToken["\\Bigg"] = null;
-      lexemeToToken["\\text"] = TK_TEXT;
-      lexemeToToken["\\textrm"] = TK_TEXT;
-      lexemeToToken["\\textit"] = TK_TEXT;
-      lexemeToToken["\\textbf"] = TK_TEXT;
-      lexemeToToken["\\lt"] = TK_LT;
-      lexemeToToken["\\le"] = TK_LE;
-      lexemeToToken["\\gt"] = TK_GT;
-      lexemeToToken["\\ge"] = TK_GE;
-      lexemeToToken["\\exists"] = TK_EXISTS;
-      lexemeToToken["\\in"] = TK_IN;
-      lexemeToToken["\\forall"] = TK_FORALL;
-      lexemeToToken["\\lim"] = TK_LIM;
-      lexemeToToken["\\exp"] = TK_EXP;
-      lexemeToToken["\\to"] = TK_TO;
-      lexemeToToken["\\sum"] = TK_SUM;
-      lexemeToToken["\\int"] = TK_INT;
-      lexemeToToken["\\prod"] = TK_PROD;
-      lexemeToToken["\\%"] = TK_PERCENT;
-      lexemeToToken["\\rightarrow"] = TK_RIGHTARROW;
-      lexemeToToken["\\binom"] = TK_BINOM;
-      lexemeToToken["\\begin"] = TK_BEGIN;
-      lexemeToToken["\\end"] = TK_END;
-      lexemeToToken["\\colon"] = TK_COLON;
-
+      var lexemeToToken = {
+        "\\cdot": TK_MUL,
+        "\\times": TK_MUL,
+        "\\div": TK_DIV,
+        "\\dfrac": TK_FRAC,
+        "\\frac": TK_FRAC,
+        "\\sqrt": TK_SQRT,
+        "\\pm": TK_PM,
+        "\\sin": TK_SIN,
+        "\\cos": TK_COS,
+        "\\tan": TK_TAN,
+        "\\sec": TK_SEC,
+        "\\cot": TK_COT,
+        "\\csc": TK_CSC,
+        "\\ln": TK_LN,
+        "\\lg": TK_LG,
+        "\\log": TK_LOG,
+        "\\left": null,  // whitespace
+        "\\right": null,
+        "\\big": null,
+        "\\Big": null,
+        "\\bigg": null,
+        "\\Bigg": null,
+        "\\text": TK_TEXT,
+        "\\textrm": TK_TEXT,
+        "\\textit": TK_TEXT,
+        "\\textbf": TK_TEXT,
+        "\\lt": TK_LT,
+        "\\le": TK_LE,
+        "\\gt": TK_GT,
+        "\\ge": TK_GE,
+        "\\exists": TK_EXISTS,
+        "\\in": TK_IN,
+        "\\forall": TK_FORALL,
+        "\\lim": TK_LIM,
+        "\\exp": TK_EXP,
+        "\\to": TK_TO,
+        "\\sum": TK_SUM,
+        "\\int": TK_INT,
+        "\\prod": TK_PROD,
+        "\\%": TK_PERCENT,
+        "\\rightarrow": TK_RIGHTARROW,
+        "\\binom": TK_BINOM,
+        "\\begin": TK_BEGIN,
+        "\\end": TK_END,
+        "\\colon": TK_COLON,
+      };
       var identifiers = keys(env);
+      // Return a scanner object.
       return {
         start : start ,
         lexeme : function () { return lexeme } ,
         pos: function() { return curIndex; },
       }
-
+      // Start scanning for one token.
       function start () {
         var c;
         lexeme = "";
@@ -1317,7 +1303,7 @@ var Model = (function () {
         }
         return 0;
       }
-
+      // Recognize 1, 1.2, 0.3, .3
       function number(c) {
         while (c >= '0'.charCodeAt(0) && c <= '9'.charCodeAt(0) ||
                c === '.'.charCodeAt(0)) {
@@ -1327,14 +1313,13 @@ var Model = (function () {
         curIndex--;
         return TK_NUM;
       }
-
+      // Recognize x, cm, kg.
       function variable(c) {
         // Normal variables are a single character, but we treat units as
         // variables too so we need to scan the whole unit string as a variable
         // name.
         var ch = String.fromCharCode(c);
         lexeme += ch;
-
         // All single character names are valid variable lexemes. Now we check
         // for longer matches against unit names. The longest one wins.
         while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
@@ -1361,7 +1346,7 @@ var Model = (function () {
         curIndex--;
         return TK_VAR;
       }
-
+      // Recognize \frac, \sqrt.
       function latex() {
         var c = src.charCodeAt(curIndex++);
         if (c === '$'.charCodeAt(0)) {
@@ -1370,14 +1355,13 @@ var Model = (function () {
         } else if (c === '%'.charCodeAt(0)) {
           lexeme += String.fromCharCode(c);
         } else {
-        while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
-               c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
-          lexeme += String.fromCharCode(c);
-          c = src.charCodeAt(curIndex++);
+          while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
+                 c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
+            lexeme += String.fromCharCode(c);
+            c = src.charCodeAt(curIndex++);
+          }
+          curIndex--;
         }
-        curIndex--;
-        }
-
         var tk = lexemeToToken[lexeme];
         if (tk === void 0) {
           tk = TK_VAR;   // e.g. \\theta
@@ -1398,24 +1382,6 @@ var Model = (function () {
         return tk;
       }
     }
-
-    return {
-      expr : expr
-    };
-  }
-
-  // Self tests
-
-  function test() {
-    trace("\nModel self testing");
-    (function () {
-      var node = Model.create("\\int y dx");
-      trace("node=" + JSON.stringify(node, null, 2));
-    })();
-  }
-  var RUN_SELF_TESTS = false;
-  if (RUN_SELF_TESTS) {
-    test();
   }
   return Model;
 })();
