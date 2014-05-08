@@ -953,7 +953,7 @@ var Model = (function () {
     }
 
     function multiplicativeExpr() {
-      var t, expr;
+      var t, expr, explicitOperator = false;
       var args = [exponentialExpr()];
       // While lookahead is not a lower precedent operator
       // FIXME need a better way to organize this condition
@@ -964,6 +964,7 @@ var Model = (function () {
             t !== TK_NEWROW && t !== TK_NEWCOL && t !== TK_END) {
         if (isMultiplicative(t)) {
           next();
+          explicitOperator = true;
         }
         expr = exponentialExpr();
         if (t === TK_DIV) {
@@ -981,12 +982,13 @@ var Model = (function () {
           args.pop();
           expr = unaryNode(Model.M, [expr]);
         }
+        expr.explicitOperator = explicitOperator;
         args.push(expr);
       }
       if (args.length > 1) {
         if (isChemCore() && isChemSymbol(args[1])) {
           // 2NaCl NaCl
-          if (args[0].op === Model.NUM) {
+          if (isNumber(args[0])) {
             // 2NaCl
             var coeff = args.shift();
             return multiplyNode([coeff, binaryNode(Model.ADD, args)]);
@@ -994,11 +996,17 @@ var Model = (function () {
             // NaCl
             return binaryNode(Model.ADD, args);
           }
+        } else if (isMixedFraction(args)) {
+          // 3 1/2 -> 3+1/2
+          return binaryNode(Model.ADD, [
+            args[0],
+            multiplyNode([
+              args[1],
+              args[2]
+            ])
+          ]);
         } else {
-          return {
-            op: Model.MUL,
-            args: args
-          };
+          return multiplyNode(args);
         }
       } else {
         return args[0];
@@ -1007,6 +1015,20 @@ var Model = (function () {
       function isMultiplicative(t) {
         return t === TK_MUL || t === TK_DIV;
       }
+    }
+
+    function isNumber(n) {
+      return n.op === Model.NUM;
+    }
+
+    function isMixedFraction(args) {
+      return args.length === 3 &&
+        args[1].explicitOperator === false &&
+        args[2].explicitOperator === true &&
+        args[2].op === Model.POW &&
+        args[2].args[1].args[0] === "-1" &&
+        args[0].op === Model.NUM &&
+        args[1].op === Model.NUM;
     }
 
     function isNeg(n) {
