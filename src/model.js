@@ -207,6 +207,7 @@ var Model = (function () {
     ROW: "row",
     COL: "col",
     COLON: "colon",
+    MATRIX: "matrix",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -578,12 +579,17 @@ var Model = (function () {
       case TK_BEGIN:
         next();
         var figure = braceExpr();
-        e = {
-          op: figure.args[0],
-          args: [matrixExpr()]
-        };
+        var tbl = matrixExpr();
         eat(TK_END);
         braceExpr();
+        if (figure.args[0].indexOf("matrix") >= 0) {
+          e = {
+            op: Model.MATRIX,
+            args: [tbl],
+          };
+        } else {
+          assert(false, "Unrecognized LaTeX name");
+        }
         break;
       case TK_VERTICALBAR:
         e = absExpr();
@@ -787,12 +793,10 @@ var Model = (function () {
         next();
         args.push(rowExpr());
       }
-      if (args.length > 1) {
-        node = {op: tokenToOperator[TK_NEWROW], args: args};
-      } else {
-        node = args[0];
-      }
-      return node;
+      return {
+        op: tokenToOperator[TK_NEWROW],
+        args: args
+      };
     }
     // Parse '1 & 2 & 3'
     function rowExpr( ) {
@@ -803,11 +807,10 @@ var Model = (function () {
         next();
         args.push(equalExpr());
       }
-      if (args.length > 1) {
-        return {op: tokenToOperator[TK_NEWCOL], args: args};
-      } else {
-        return args[0];
-      }
+      return {
+        op: tokenToOperator[TK_NEWCOL],
+        args: args
+      };
     }
     // Parse '| expr |'
     function absExpr() {
