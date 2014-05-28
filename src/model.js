@@ -465,19 +465,32 @@ var Model = (function () {
     tokenToOperator[TK_NEWCOL] = OpStr.COL;
     tokenToOperator[TK_COLON] = OpStr.COLON;
     // Construct a number node.
-    function numberNode(n, doScale, roundOnly) {
+    function numberNode(n0, doScale, roundOnly) {
       // doScale - scale n if true
       // roundOnly - only scale if rounding
+      var n1 = n0.toString();
+      var n2 = "";
+      var i, ch;
+      var hasSeparator = false;
+      for (i = 0; i < n1.length; i++) {
+        if ((ch = n1.charAt(i)) === ",") {
+          // FIXME add check for valid use of commas here.
+          hasSeparator = true;
+        } else {
+          n2 += ch;
+        }
+      }
       if (doScale) {
-        var n = new BigDecimal(n.toString());
+        n2 = new BigDecimal(n2);
         var scale = option("decimalPlaces")
-        if (!roundOnly || n.scale() > scale) {
-          n = n.setScale(scale, BigDecimal.ROUND_HALF_UP);
+        if (!roundOnly || n2.scale() > scale) {
+          n2 = n2.setScale(scale, BigDecimal.ROUND_HALF_UP);
         }
       }
       return {
         op: Model.NUM,
-        args: [n.toString()]
+        hasSeparator: hasSeparator,
+        args: [n2]
       }
     }
     // Construct a multiply node.
@@ -566,7 +579,7 @@ var Model = (function () {
         e = {op: "var", args: args};
         break;
       case TK_NUM:
-        e = {op: "num", args: [lexeme()]};
+        e = numberNode(lexeme());
         next();
         break;
       case TK_LEFTPAREN:
@@ -1331,7 +1344,9 @@ var Model = (function () {
       // Recognize 1, 1.2, 0.3, .3
       function number(c) {
         while (c >= '0'.charCodeAt(0) && c <= '9'.charCodeAt(0) ||
-               c === '.'.charCodeAt(0)) {
+               c === '.'.charCodeAt(0) ||
+               Model.option("allowThousandsSeparator") &&
+               c === ','.charCodeAt(0)) {
           lexeme += String.fromCharCode(c);
           c = src.charCodeAt(curIndex++);
         }
