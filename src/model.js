@@ -896,6 +896,7 @@ var Model = (function () {
         break;
       case TK_SUB:
       case TK_PM:
+      case TK_CARET:
         next();
         expr = unaryExpr();
         expr = {op: tokenToOperator[t], args: [expr]};
