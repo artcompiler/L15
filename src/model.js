@@ -1132,7 +1132,7 @@ var Model = (function () {
         var expr2 = multiplicativeExpr();
         switch(t) {
         case TK_PM:
-          expr = {op: Model.PM, args: [expr, expr2]};
+          expr = binaryNode(Model.PM, [expr, expr2]);
           break;
         case TK_SUB:
           expr2 = negate(expr2);
