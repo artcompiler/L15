@@ -1213,13 +1213,17 @@ var Model = (function () {
     // Root syntax.
     function expr() {
       start();
-      var n = commaExpr();
-      assert(!hd(), message(1003, [scan.pos(), scan.lexeme()]));
-      return n;
+      if (hd()) {
+        var n = commaExpr();
+        assert(!hd(), message(1003, [scan.pos(), scan.lexeme()]));
+        return n;
+      }
+      // No meaningful input. Return a dummy node to avoid choking.
+      return numberNode("dummy");
     }
     // Return a parser object.
     return {
-      expr : expr
+      expr: expr
     };
     //
     // SCANNER
@@ -1444,7 +1448,7 @@ var Model = (function () {
             lexeme += ch;
             c = src.charCodeAt(curIndex++);
           }
-          tk = TK_VAR; // treat as a variable
+          tk = null; // treat as whitespace
         }
         return tk;
       }
