@@ -1010,12 +1010,15 @@ var Model = (function () {
               }
             ]
           };
-        } else if (isChemCore() && t === TK_LEFTPAREN && isVar(args[args.length-1], "M")) {
-          // Convert 'M(x)' to '\M(x)'
+        }
+        if (isChemCore() && t === TK_LEFTPAREN && isVar(args[args.length-1], "M")) {
+          // M(x) -> \M(x)
           args.pop();
           expr = unaryNode(Model.M, [expr]);
+        } else if (!explicitOperator && isMixedFraction([args[args.length-1], expr])) {
+          // 3 \frac{1}{2} -> 3 + \frac{1}{2}
+          expr = binaryNode(Model.ADD, [args.pop(), expr]);
         }
-        expr.explicitOperator = explicitOperator;
         args.push(expr);
       }
       if (args.length > 1) {
@@ -1027,20 +1030,6 @@ var Model = (function () {
             return multiplyNode([coeff, binaryNode(Model.ADD, args)]);
           } else {
             // NaCl
-            return binaryNode(Model.ADD, args);
-          }
-        } else if (isMixedFraction(args)) {
-          // 3 1/2 -> 3+1/2
-          if (args.length === 3) {
-            return binaryNode(Model.ADD, [
-              args[0],
-              multiplyNode([
-                args[1],
-                args[2]
-              ])
-            ]);
-          } else {
-            assert(args.length === 2, "Invalid mixed fraction");
             return binaryNode(Model.ADD, args);
           }
         } else {
@@ -1060,30 +1049,17 @@ var Model = (function () {
     }
 
     function isMixedFraction(args) {
-      var result;
-      if (args.length === 3) {
-        result =
-          !args[1].explicitOperator &&
-          args[2].explicitOperator &&
-          args[2].op === Model.POW &&
-          args[2].args[1].args[0] === "-1" &&
-          args[0].op === Model.NUM &&
-          args[1].op === Model.NUM;
-      } else if (args.length === 2) {
-        // 1\frac{1}{2} but not 1\frac{x}{2} or 1\frac{1+2}{3}
-        result =
-          !args[0].explicitOperator &&
-          args[1].op === Model.MUL &&
+      // 3 \frac{1}{2}
+      if (args[1].op === Model.MUL &&
           args[1].args[0].op === Model.NUM &&
           args[1].args[1].op === Model.POW &&
           args[1].args[1].args[0].op === Model.NUM &&
           args[1].args[1].args[1].op === Model.NUM &&
           args[1].args[1].args[1].args[0] === "-1" &&
-          args[0].op === Model.NUM;
-      } else {
-        result = false;
+          args[0].op === Model.NUM) {
+        return true;
       }
-      return result;
+      return false;
     }
 
     function isNeg(n) {
