@@ -581,6 +581,11 @@ var Model = (function () {
       case TK_NUM:
         e = numberNode(lexeme());
         next();
+        if (hd()===TK_PM) {
+          next();
+          e = binaryNode(Model.PM, [e, numberNode(lexeme())]);
+          next();
+        }
         break;
       case TK_LEFTPAREN:
       case TK_LEFTBRACKET:
@@ -933,7 +938,7 @@ var Model = (function () {
             ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // Na^+
-          args.push(unaryNode(t, [numberNode(1)]));
+          args.push(unaryNode(t, [numberNode("1")]));
         } else {
           var n = unaryExpr();
           if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
