@@ -166,6 +166,7 @@ var Model = (function () {
     EQL: "=",
     ATAN2: "atan2",
     SQRT: "sqrt",
+    VEC: "vec",
     PM: "pm",
     SIN: "sin",
     COS: "cos",
@@ -309,6 +310,9 @@ var Model = (function () {
           break;
         }
         break;
+      case OpStr.VEC:
+        text = "\\vec{" + args[0] + "}";
+        break;
       case OpStr.MUL:
         // if subexpr is lower precedence, wrap in parens
         var prevTerm;
@@ -421,11 +425,13 @@ var Model = (function () {
     var TK_BEGIN = 0x120;
     var TK_END = 0x121;
     var TK_COLON = ':'.charCodeAt(0);
+    var TK_VEC = 0x122;
     var T0 = TK_NONE, T1 = TK_NONE;
     // Define mapping from token to operator
     var tokenToOperator = {};
     tokenToOperator[TK_FRAC] = OpStr.FRAC;
     tokenToOperator[TK_SQRT] = OpStr.SQRT;
+    tokenToOperator[TK_VEC] = OpStr.VEC;
     tokenToOperator[TK_ADD] = OpStr.ADD;
     tokenToOperator[TK_SUB] = OpStr.SUB;
     tokenToOperator[TK_PM] = OpStr.PM;
@@ -673,6 +679,15 @@ var Model = (function () {
           assert(false, message(1001, ["{ or (", String.fromCharCode(hd())]));
           break;
         }
+        break;
+      case TK_VEC:
+        next();
+        var name = braceExpr();
+        e = {
+          op: Model.VEC,
+          args: [
+            name
+          ]};
         break;
       case TK_SIN:
       case TK_COS:
@@ -1221,6 +1236,7 @@ var Model = (function () {
         "\\dfrac": TK_FRAC,
         "\\frac": TK_FRAC,
         "\\sqrt": TK_SQRT,
+        "\\vec": TK_VEC,
         "\\pm": TK_PM,
         "\\sin": TK_SIN,
         "\\cos": TK_COS,
