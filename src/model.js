@@ -1014,6 +1014,7 @@ var Model = (function () {
             t !== TK_RIGHTPAREN && t !== TK_RIGHTBRACKET &&
             t !== TK_RIGHTARROW && t !== TK_LT && t !== TK_VERTICALBAR &&
             t !== TK_NEWROW && t !== TK_NEWCOL && t !== TK_END) {
+        explicitOperator = false;
         if (isMultiplicative(t)) {
           next();
           explicitOperator = true;
