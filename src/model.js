@@ -1037,7 +1037,11 @@ var Model = (function () {
           expr = unaryNode(Model.M, [expr]);
         } else if (!explicitOperator && isMixedFraction([args[args.length-1], expr])) {
           // 3 \frac{1}{2} -> 3 + \frac{1}{2}
-          expr = binaryNode(Model.ADD, [args.pop(), expr]);
+          t = args.pop();
+          if (isNeg(t)) {
+            expr = binaryNode(Model.MUL, [numberNode("-1"), expr]);
+          }
+          expr = binaryNode(Model.ADD, [t, expr]);
         }
         args.push(expr);
       }
@@ -1076,17 +1080,24 @@ var Model = (function () {
           args[1].args[1].args[0].op === Model.NUM &&
           args[1].args[1].args[1].op === Model.NUM &&
           args[1].args[1].args[1].args[0] === "-1" &&
-          args[0].op === Model.NUM) {
+          (args[0].op === Model.NUM  ||
+           isAdditive(args[0].op) &&
+           args[0].args.length === 1 &&
+           args[0].args[0].op === Model.NUM)) {
         return true;
       }
       return false;
+      function isAdditive(op) {
+        return op === Model.ADD ||
+          op === Model.SUB;
+      }
     }
 
     function isNeg(n) {
       if (typeof n === "number") {
         return n < 0;
       } else if (n.args.length===1) {
-        return n.op===OpStr.SUB && n.args[0] > 0;  // is unary minus
+        return n.op===OpStr.SUB && n.args[0].args[0] > 0;  // is unary minus
       } else if (n.args.length===2) {
         return n.op===OpStr.MUL && isNeg(n.args[0]);  // leading term is neg
       }
