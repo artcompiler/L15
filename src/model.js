@@ -919,6 +919,9 @@ var Model = (function () {
         expr = unaryExpr();
         break;
       case TK_SUB:
+        next();
+        expr = negate(unaryExpr());
+        break;
       case TK_PM:
       case TK_CARET:
         next();
@@ -1081,9 +1084,13 @@ var Model = (function () {
           args[1].args[1].args[1].op === Model.NUM &&
           args[1].args[1].args[1].args[0] === "-1" &&
           (args[0].op === Model.NUM  ||
-           isAdditive(args[0].op) &&
+           isAdditive(args[0].op) &&              // unary + or -
            args[0].args.length === 1 &&
-           args[0].args[0].op === Model.NUM)) {
+           args[0].args[0].op === Model.NUM ||
+           args[0].op === Model.MUL &&            // -1*n (expansion)
+           args[0].args.length === 2 &&
+           args[0].args[0].op === Model.NUM &&
+           args[0].args[0].args[0] === "-1")) {
         return true;
       }
       return false;
@@ -1097,7 +1104,8 @@ var Model = (function () {
       if (typeof n === "number") {
         return n < 0;
       } else if (n.args.length===1) {
-        return n.op===OpStr.SUB && n.args[0].args[0] > 0;  // is unary minus
+        return n.op === OpStr.SUB && n.args[0].args[0] > 0 ||  // is unary minus
+               n.op === Model.NUM && n.args[0] === "-1";       // is -1
       } else if (n.args.length===2) {
         return n.op===OpStr.MUL && isNeg(n.args[0]);  // leading term is neg
       }
