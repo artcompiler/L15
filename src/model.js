@@ -1158,7 +1158,7 @@ var Model = (function () {
           expr2 = negate(expr2);
           // fall through
         default:
-          expr = {op: Model.ADD, args: [expr, expr2]};
+          expr = binaryNode(Model.ADD, [expr, expr2], true /*flatten*/);
           break;
         }
       }
