@@ -93,6 +93,7 @@ var Model = (function () {
   Assert.messages[1002] = "Square brackets can only be used to denote intervals.";
   Assert.messages[1003] = "Extra characters in input at position: %1, lexeme: %2.";
   Assert.messages[1004] = "Invalid character '%1' (%2) in input.";
+  Assert.messages[1005] = "Misplaced thousands separator.";
   var message = Assert.message;
 
   // Create a model from a node object or expression string
@@ -477,14 +478,21 @@ var Model = (function () {
       var n1 = n0.toString();
       var n2 = "";
       var i, ch;
+      var lastSeparatorIndex;
       var hasSeparator = false;
       for (i = 0; i < n1.length; i++) {
         if ((ch = n1.charAt(i)) === ",") {
-          // FIXME add check for valid use of commas here.
+          if (hasSeparator && lastSeparatorIndex !== i - 4) {
+            assert(false, message(1005));
+          }
+          lastSeparatorIndex = i;
           hasSeparator = true;
         } else {
           n2 += ch;
         }
+      }
+      if (hasSeparator && lastSeparatorIndex !== i - 4) {
+        assert(false, message(1005));
       }
       if (doScale) {
         n2 = new BigDecimal(n2);
