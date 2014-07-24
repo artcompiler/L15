@@ -480,6 +480,7 @@ var Model = (function () {
       var i, ch;
       var lastSeparatorIndex;
       var hasSeparator = false;
+      var numberFormat = "integer";
       for (i = 0; i < n1.length; i++) {
         if ((ch = n1.charAt(i)) === ",") {
           if (hasSeparator && lastSeparatorIndex !== i - 4) {
@@ -488,6 +489,9 @@ var Model = (function () {
           lastSeparatorIndex = i;
           hasSeparator = true;
         } else {
+          if (ch === '.') {
+            numberFormat = "decimal";
+          }
           n2 += ch;
         }
       }
@@ -503,7 +507,8 @@ var Model = (function () {
       }
       return {
         op: Model.NUM,
-        hasSeparator: hasSeparator,
+        hasThousandsSeparator: hasSeparator,
+        numberFormat: numberFormat,
         args: [n2]
       }
     }
@@ -646,6 +651,7 @@ var Model = (function () {
             ]
           }]
         };
+        e.isFraction = true;
         break;
       case TK_BINOM:
         next();
@@ -661,6 +667,7 @@ var Model = (function () {
           numberNode("-1")
         ]);
         e = binaryNode(Model.MUL, [num, den]);
+        e.isBinomial = true;
         break;
       case TK_SQRT:
         next();
@@ -891,6 +898,7 @@ var Model = (function () {
       // Save the brackets as attributes on the node for later use.
       e.lbrk = tk;
       e.rbrk = tk2;
+      // FIXME need to construct interval node here, if that is what we have.
       return e;
     }
     // Parse '10%', '4!'
@@ -1016,7 +1024,7 @@ var Model = (function () {
     }
     // Parse 'a \times b', 'a * b'
     function multiplicativeExpr() {
-      var t, expr, explicitOperator = false;
+      var t, expr, explicitOperator = false, isFraction;
       var args = [exponentialExpr()];
       // While lookahead is not a lower precedent operator
       // FIXME need a better way to organize this condition
@@ -1039,8 +1047,9 @@ var Model = (function () {
                 op: Model.NUM,
                 args: ["-1"]
               }
-            ]
+            ],
           };
+          isFraction = true;
         }
         if (isChemCore() && t === TK_LEFTPAREN && isVar(args[args.length-1], "M")) {
           // M(x) -> \M(x)
@@ -1053,6 +1062,7 @@ var Model = (function () {
             expr = binaryNode(Model.MUL, [numberNode("-1"), expr]);
           }
           expr = binaryNode(Model.ADD, [t, expr]);
+          expr.isMixedFraction = true;
         }
         args.push(expr);
       }
@@ -1068,7 +1078,9 @@ var Model = (function () {
             return binaryNode(Model.ADD, args);
           }
         } else {
-          return multiplyNode(args);
+          expr = multiplyNode(args);
+          expr.isFraction = isFraction;
+          return expr;
         }
       } else {
         return args[0];
