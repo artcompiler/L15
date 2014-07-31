@@ -898,7 +898,12 @@ var Model = (function () {
       // Save the brackets as attributes on the node for later use.
       e.lbrk = tk;
       e.rbrk = tk2;
-      // FIXME need to construct interval node here, if that is what we have.
+      // intervals: (1, 3), [1, 3], [1, 3), (1, 3]
+      if (Model.option("allowInterval") && e.args.length === 2 &&
+          (tk === TK_LEFTPAREN || tk === TK_LEFTBRACKET) &&
+          (tk2 === TK_RIGHTPAREN || tk2 === TK_RIGHTBRACKET)) {
+        e = unaryNode(Model.INTERVAL, [e]);
+      }
       return e;
     }
     // Parse '10%', '4!'
