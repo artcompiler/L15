@@ -1485,6 +1485,7 @@ var Model = (function () {
         } else if (tk === TK_TEXT) {
           var c = src.charCodeAt(curIndex++);
           while (c !== "{".charCodeAt(0)) {
+            lexeme += String.fromCharCode(c);
             c = src.charCodeAt(curIndex++);
           }
           lexeme = "";
@@ -1494,7 +1495,7 @@ var Model = (function () {
             lexeme += ch;
             c = src.charCodeAt(curIndex++);
           }
-          tk = null; // treat as whitespace
+          tk = TK_VAR; // treat as variable
         }
         return tk;
       }
