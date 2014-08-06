@@ -1302,6 +1302,9 @@ var Model = (function () {
         "\\Big": null,
         "\\bigg": null,
         "\\Bigg": null,
+        "\\ ": null,
+        "\\quad": null,
+        "\\qquad": null,
         "\\text": TK_TEXT,
         "\\textrm": TK_TEXT,
         "\\textit": TK_TEXT,
@@ -1471,6 +1474,12 @@ var Model = (function () {
           lexeme = String.fromCharCode(c);
         } else if (c === '%'.charCodeAt(0)) {
           lexeme += String.fromCharCode(c);
+        } else if ([' '.charCodeAt(0),
+                    ':'.charCodeAt(0),
+                    ';'.charCodeAt(0),
+                    ','.charCodeAt(0),
+                    '!'.charCodeAt(0)].indexOf(c) >= 0) {
+          lexeme = "\\ ";
         } else {
           while (c >= 'a'.charCodeAt(0) && c <= 'z'.charCodeAt(0) ||
                  c >= 'A'.charCodeAt(0) && c <= 'Z'.charCodeAt(0)) {
