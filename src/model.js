@@ -175,6 +175,9 @@ var Model = (function () {
     SEC: "sec",
     COT: "cot",
     CSC: "csc",
+    ARCSIN: "arcsin",
+    ARCCOS: "arccos",
+    ARCTAN: "arctan",
     LOG: "log",
     LN: "ln",
     LG: "lg",
@@ -230,6 +233,9 @@ var Model = (function () {
   OpToLaTeX[OpStr.SIN] = "\\sin";
   OpToLaTeX[OpStr.COS] = "\\cos";
   OpToLaTeX[OpStr.TAN] = "\\tan";
+  OpToLaTeX[OpStr.ARCSIN] = "\\arcsin";
+  OpToLaTeX[OpStr.ARCCOS] = "\\arccos";
+  OpToLaTeX[OpStr.ARCTAN] = "\\arctan";
   OpToLaTeX[OpStr.SEC] = "\\sec";
   OpToLaTeX[OpStr.COT] = "\\cot";
   OpToLaTeX[OpStr.CSC] = "\\csc";
@@ -288,6 +294,9 @@ var Model = (function () {
       case OpStr.SIN:
       case OpStr.COS:
       case OpStr.TAN:
+      case OpStr.ARCSIN:
+      case OpStr.ARCCOS:
+      case OpStr.ARCTAN:
       case OpStr.SEC:
       case OpStr.COT:
       case OpStr.CSC:
@@ -427,6 +436,9 @@ var Model = (function () {
     var TK_END = 0x121;
     var TK_COLON = ':'.charCodeAt(0);
     var TK_VEC = 0x122;
+    var TK_ARCSIN = 0x123;
+    var TK_ARCCOS = 0x124;
+    var TK_ARCTAN = 0x125;
     var T0 = TK_NONE, T1 = TK_NONE;
     // Define mapping from token to operator
     var tokenToOperator = {};
@@ -711,6 +723,9 @@ var Model = (function () {
       case TK_SIN:
       case TK_COS:
       case TK_TAN:
+      case TK_ARCSIN:
+      case TK_ARCCOS:
+      case TK_ARCTAN:
       case TK_SEC:
       case TK_COT:
       case TK_CSC:
@@ -1293,6 +1308,9 @@ var Model = (function () {
         "\\sec": TK_SEC,
         "\\cot": TK_COT,
         "\\csc": TK_CSC,
+        "\\arcsin": TK_ARCSIN,
+        "\\arccos": TK_ARCCOS,
+        "\\arctan": TK_ARCTAN,
         "\\ln": TK_LN,
         "\\lg": TK_LG,
         "\\log": TK_LOG,
