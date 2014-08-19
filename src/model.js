@@ -1006,6 +1006,14 @@ var Model = (function () {
             next();
             // Al^3+
             args.push(unaryNode(t, [n]));
+          } else if (n.op === Model.VAR && n.args[0] === "\\circ") {
+            // 90^{\circ} -> 90\degree
+            args = [
+              multiplyNode([args[0], {
+                op: Model.VAR,
+                args: ["\\degree"]
+              }])
+            ];
           } else {
             // x^2
             args.push(n);
