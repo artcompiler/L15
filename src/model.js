@@ -1418,7 +1418,7 @@ var Model = (function () {
               return TK_NEWROW;   // double backslash = new row
             }
             var tk = latex();
-            if (tk) {
+            if (tk !== null) {
               return tk;
             }
             lexeme = "";
@@ -1566,7 +1566,11 @@ var Model = (function () {
             lexeme += ch;
             c = src.charCodeAt(curIndex++);
           }
-          tk = TK_VAR; // treat as variable
+          if (Model.option("ignoreText")) {
+            tk = null;   // treat as whitespace
+          } else {
+            tk = TK_VAR; // treat as variable
+          }
         }
         return tk;
       }
