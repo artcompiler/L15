@@ -123,19 +123,13 @@ var Ast = (function () {
       // We have an Ast that look like a node
       node = this;
     }
-    // Intern primitive values and construct nodes for them.
-    if (typeof node === "number") {
-      node = {op: "num", args: [node.toString()]};
-    } else if (typeof node === "string") {
-      node = {op: "str", args: [node]};
-    }
     assert(typeof node === "object", "node not an object");
     var op = node.op;
     var count = node.args.length;
     var args = "";
     var args_nids = [ ];
     for (var i=0; i < count; i++) {
-      if (node.op === "str" || node.op === "num") {
+      if (typeof node.args[i] === "string") {
         args += args_nids[i] = node.args[i];
       } else {
         args += args_nids[i] = intern(node.args[i]);
@@ -162,6 +156,7 @@ var Ast = (function () {
     switch (n.op) {
     case "num":
     case "str":
+    case "var":
       n = n;
       break;
     default:

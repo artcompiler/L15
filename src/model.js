@@ -486,6 +486,14 @@ var Model = (function () {
     tokenToOperator[TK_NEWROW] = OpStr.ROW;
     tokenToOperator[TK_NEWCOL] = OpStr.COL;
     tokenToOperator[TK_COLON] = OpStr.COLON;
+
+    function newNode(op, args) {
+      return {
+        op: op,
+        args: args
+      };
+    }
+
     // Construct a number node.
     function numberNode(n0, doScale, roundOnly) {
       // doScale - scale n if true
@@ -537,10 +545,7 @@ var Model = (function () {
       if (op === Model.ADD) {
         return args[0];
       } else {
-        return {
-          op: op,
-          args: args
-        };
+        return newNode(op, args);
       }
     }
     // Construct a binary node.
@@ -554,11 +559,12 @@ var Model = (function () {
           aa.push(n);
         }
       });
-      return {
-        op: op,
-        args: aa
-      };
+      return newNode(op, aa);
     }
+
+    var nodeOne = numberNode("1");
+    var nodeMinusOne = numberNode("-1");
+
     //
     // PARSER
     //
@@ -605,12 +611,12 @@ var Model = (function () {
       case TK_VAR:
         var args = [lexeme()];
         next();
-        // Collect the subscript if there is one
+        // Collect the subscript if there is one. Subscripts make multipart variable names.
         if ((t=hd())===TK_UNDERSCORE) {
           next();
           args.push(primaryExpr());   // {op:VAR, args:["Fe", "2"]}
         }
-        e = {op: "var", args: args};
+        e = newNode(Model.VAR, args);
         break;
       case TK_NUM:
         e = numberNode(lexeme());
@@ -639,10 +645,7 @@ var Model = (function () {
         eat(TK_END);
         braceExpr();
         if (figure.args[0].indexOf("matrix") >= 0) {
-          e = {
-            op: Model.MATRIX,
-            args: [tbl],
-          };
+          e = newNode(Model.MATRIX, [tbl]);
         } else {
           assert(false, "Unrecognized LaTeX name");
         }
@@ -654,18 +657,7 @@ var Model = (function () {
         next();
         var expr1 = braceExpr();
         var expr2 = braceExpr();
-        e = {
-          op: Model.MUL,
-          args: [expr1, {
-            op: Model.POW,
-            args: [
-              expr2, {
-                op: Model.NUM,
-                args: ["-1"]
-              }
-            ]
-          }]
-        };
+        e = newNode(Model.MUL, [expr1, newNode(Model.POW, [expr2, nodeMinusOne])]);
         e.isFraction = true;
         break;
       case TK_BINOM:
@@ -679,7 +671,7 @@ var Model = (function () {
             unaryNode(Model.FACT, [k]),
             unaryNode(Model.FACT, [binaryNode(Model.ADD, [n, negate(k)])])
           ]),
-          numberNode("-1")
+          nodeMinusOne
         ]);
         e = binaryNode(Model.MUL, [num, den]);
         e.isBinomial = true;
@@ -690,24 +682,11 @@ var Model = (function () {
         case TK_LEFTBRACKET:
           var root = bracketExpr();
           var base = braceExpr();
-          e = {
-            op: Model.POW,
-            args: [
-              base,
-              root,
-              {op: Model.NUM, args: ["-1"]}
-            ]};
+          e = newNode(Model.POW, [base, root, nodeMinusOne]);
           break;
         case TK_LEFTBRACE:
           var base = braceExpr();
-          e = {
-            op: Model.POW,
-            args: [
-              base,
-              {op: Model.NUM, args: ["2"]},
-              {op: Model.NUM, args: ["-1"]}
-            ]
-          };
+          e = newNode(Model.POW, [base, newNode(Model.NUM, ["2"]), nodeMinusOne]);
           break;
         default:
           assert(false, message(1001, ["{ or (", String.fromCharCode(hd())]));
@@ -717,11 +696,7 @@ var Model = (function () {
       case TK_VEC:
         next();
         var name = braceExpr();
-        e = {
-          op: Model.VEC,
-          args: [
-            name
-          ]};
+        e = newNode(Model.VEC, [name]);
         break;
       case TK_SIN:
       case TK_COS:
@@ -741,15 +716,9 @@ var Model = (function () {
         } else {
           op = tokenToOperator[tk];
         }
-        args.unshift({
-          op: op,
-          args: [primaryExpr()]
-        });
+        args.unshift(newNode(op, [primaryExpr()]));
         if (args.length > 1) {
-          return {
-            op: Model.POW,
-            args: args
-          };
+          return newNode(Model.POW, args);
         } else {
           return args[0];
         }
@@ -767,37 +736,19 @@ var Model = (function () {
           next();
           args.push(unaryExpr());
         }
-        args.unshift({
-          op: tokenToOperator[tk],
-          args: [primaryExpr()]
-        });
+        args.unshift(newNode(tokenToOperator[tk], [primaryExpr()]));
         if (args.length > 1) {
-          return {
-            op: Model.POW,
-            args: args
-          };
+          return newNode(Model.POW, args);
         } else {
           return args[0];
         }
         break;
       case TK_LN:
         next();
-        return {
-          op: Model.LOG,
-          args: [{
-            op: Model.VAR,
-            args: ["e"]
-          }, primaryExpr()]
-        };
+        return newNode(Model.LOG, [newNode(Model.VAR, ["e"]), primaryExpr()]);
       case TK_LG:
         next();
-        return {
-          op: Model.LOG,
-          args: [{
-            op: Model.NUM,
-            args: ["10"]
-          }, primaryExpr()]
-        };
+        return newNode(Model.LOG, [newNode(Model.NUM, ["10"]), primaryExpr()]);
       case TK_LOG:
         next();
         var t, args = [];
@@ -806,17 +757,11 @@ var Model = (function () {
           next();
           args.push(primaryExpr());
         } else {
-          args.push({
-            op: Model.VAR,
-            args: ["e"]    // default to natural log
-          });
+          args.push(newNode(Model.VAR, ["e"]));    // default to natural log
         }
         args.push(primaryExpr());
         // Finish the log function
-        return {
-          op: Model.LOG,
-          args: args
-        };
+        return newNode(Model.LOG, args);
         break;
       case TK_LIM:
         next();
@@ -826,10 +771,7 @@ var Model = (function () {
         args.push(primaryExpr());
         args.push(primaryExpr());
         // Finish the log function
-        return {
-          op: tokenToOperator[tk],
-          args: args
-        };
+        return newNode(tokenToOperator[tk], args);
         break;
       case TK_SUM:
       case TK_INT:
@@ -845,35 +787,20 @@ var Model = (function () {
         }
         args.push(commaExpr());
         // Finish the log function
-        return {
-          op: tokenToOperator[tk],
-          args: args
-        };
+        return newNode(tokenToOperator[tk], args);
         break;
       case TK_EXISTS:
         next();
-        return {
-          op: Model.EXISTS,
-          args: [equalExpr()]
-        };
+        return newNode(Model.EXISTS, [equalExpr()]);
       case TK_FORALL:
         next();
-        return {
-          op: Model.FORALL,
-          args: [commaExpr()]
-        };
+        return newNode(Model.FORALL, [commaExpr()]);
       case TK_EXP:
         next();
-        return {
-          op: Model.EXP,
-          args: [additiveExpr()]
-        };
+        return newNode(Model.EXP, [additiveExpr()]);
       case TK_M:
         next();
-        return {
-          op: Model.M,
-          args: [multiplicativeExpr()]
-        };
+        return newNode(Model.M, [multiplicativeExpr()]);
       default:
         assert(false, "Model.primaryExpr() unexpected expression kind " + lexeme());
         e = void 0;
@@ -890,10 +817,7 @@ var Model = (function () {
         next();
         args.push(rowExpr());
       }
-      return {
-        op: tokenToOperator[TK_NEWROW],
-        args: args
-      };
+      return newNode(tokenToOperator[TK_NEWROW], args);
     }
     // Parse '1 & 2 & 3'
     function rowExpr( ) {
@@ -904,10 +828,7 @@ var Model = (function () {
         next();
         args.push(equalExpr());
       }
-      return {
-        op: tokenToOperator[TK_NEWCOL],
-        args: args
-      };
+      return newNode(tokenToOperator[TK_NEWCOL], args);
     }
     // Parse '| expr |'
     function absExpr() {
@@ -958,17 +879,11 @@ var Model = (function () {
       switch (t = hd()) {
       case TK_PERCENT:
         next();
-        expr = {
-          op: Model.PERCENT,
-          args: [expr]
-        }
+        expr = newNode(Model.PERCENT, [expr]);
         break;
       case TK_BANG:
         next();
-        expr = {
-          op: Model.FACT,
-          args: [expr]
-        }
+        expr = newNode(Model.FACT, [expr]);
         break;
       default:
         break;
@@ -992,7 +907,7 @@ var Model = (function () {
       case TK_CARET:
         next();
         expr = unaryExpr();
-        expr = {op: tokenToOperator[t], args: [expr]};
+        expr = newNode(tokenToOperator[t], [expr]);
         break;
       default:
         expr = postfixExpr();
@@ -1008,10 +923,7 @@ var Model = (function () {
         args.push(unaryExpr());
       }
       if (args.length > 1) {
-        return {
-          op: Model.SUBSCRIPT,
-          args: args
-        };
+        return newNode(Model.SUBSCRIPT, args);
       } else {
         return args[0];
       }
@@ -1026,7 +938,7 @@ var Model = (function () {
             ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // Na^+
-          args.push(unaryNode(t, [numberNode("1")]));
+          args.push(unaryNode(t, [nodeOne]));
         } else {
           var n = unaryExpr();
           if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
@@ -1036,10 +948,7 @@ var Model = (function () {
           } else if (n.op === Model.VAR && n.args[0] === "\\circ") {
             // 90^{\circ} -> 90\degree
             args = [
-              multiplyNode([args[0], {
-                op: Model.VAR,
-                args: ["\\degree"]
-              }])
+              multiplyNode([args[0], newNode(Model.VAR, ["\\degree"])])
             ];
           } else {
             // x^2
@@ -1048,10 +957,7 @@ var Model = (function () {
         }
       }
       if (args.length > 1) {
-        return {
-          op: Model.POW,
-          args: args
-        };
+        return newNode(Model.POW, args);
       } else {
         return args[0];
       }
@@ -1098,15 +1004,7 @@ var Model = (function () {
         }
         expr = exponentialExpr();
         if (t === TK_DIV) {
-          expr = {
-            op: Model.POW,
-            args: [
-              expr, {
-                op: Model.NUM,
-                args: ["-1"]
-              }
-            ],
-          };
+          expr = newNode(Model.POW, [expr, nodeMinusOne]);
           isFraction = true;
         }
         if (isChemCore() && t === TK_LEFTPAREN && isVar(args[args.length-1], "M")) {
@@ -1117,7 +1015,7 @@ var Model = (function () {
           // 3 \frac{1}{2} -> 3 + \frac{1}{2}
           t = args.pop();
           if (isNeg(t)) {
-            expr = binaryNode(Model.MUL, [numberNode("-1"), expr]);
+            expr = binaryNode(Model.MUL, [nodeMinusOne, expr]);
           }
           expr = binaryNode(Model.ADD, [t, expr]);
           expr.isMixedFraction = true;
@@ -1201,23 +1099,13 @@ var Model = (function () {
         } else if (n.op === Model.NUM) {
           return numberNode("-" + n.args[0]);
         } else {
-          return {
-            op: Model.MUL,
-            args: [{
-              op: Model.NUM, args: ["-1"]
-            }, n]
-          };
+          return multiplyNode([nodeMinusOne, n]);
         }
       } else if (n.op === Model.MUL) {
-        n.args.unshift({op: Model.NUM, args: ["-1"]});
+        n.args.unshift(nodeMinusOne);
         return n;
       }
-      return {
-        op: Model.MUL,
-        args: [{
-          op: Model.NUM, args: ["-1"]
-        }, n]
-      };
+      return multiplyNode([nodeMinusOne, n]);
     }
     //
     function isAdditive(t) {
@@ -1254,7 +1142,7 @@ var Model = (function () {
       var t = hd();
       if (isRelational(t)) {
         // Leading '=' so synthesize a variable.
-        var expr = {op: Model.VAR, args: ["_"]};
+        var expr = newNode(Model.VAR, ["_"]);
       } else {
         var expr = additiveExpr();
       }
@@ -1262,13 +1150,13 @@ var Model = (function () {
         next();
         if (hd() === 0) {
           // Leading '=' so synthesize a variable.
-          var expr2 = {op: Model.VAR, args: ["_"]};
+          var expr2 = newNode(Model.VAR, ["_"]);
         } else {
           var expr2 = additiveExpr();
         }
         switch(t) {
         default:
-          expr = {op: tokenToOperator[t], args: [expr, expr2]};
+          expr = newNode(tokenToOperator[t], [expr, expr2]);
           break;
         }
       }
@@ -1278,7 +1166,7 @@ var Model = (function () {
     function equalExpr() {
       if (hd() === TK_EQL) {
         // Leading '=' so synthesize a variable.
-        var expr = {op: Model.VAR, args: ["_"]};
+        var expr = newNode(Model.VAR, ["_"]);
       } else {
         var expr = relationalExpr();
       }
@@ -1287,11 +1175,11 @@ var Model = (function () {
         next();
         if (hd() === 0) {
           // Leading '=' so synthesize a variable.
-          var expr2 = {op: Model.VAR, args: ["_"]};
+          var expr2 = newNode(Model.VAR, ["_"]);
         } else {
           var expr2 = equalExpr();
         }
-        expr = {op: tokenToOperator[t], args: [expr, expr2]};
+        expr = newNode(tokenToOperator[t], [expr, expr2]);
       }
       return expr;
     }
@@ -1305,7 +1193,7 @@ var Model = (function () {
         args.push(equalExpr());
       }
       if (args.length > 1) {
-        return {op: tokenToOperator[TK_COMMA], args: args};
+        return newNode(tokenToOperator[TK_COMMA], args);
       } else {
         return expr;
       }
