@@ -94,14 +94,14 @@ var Ast = (function () {
   }
 
   // Get or set the args of this node.
-  Ast.prototype.args = function args(args) {
+  Ast.prototype.args = function args(a) {
     if (!isNode(this)) {
       throw "Malformed node";
     }
-    if (args === undefined) {
+    if (a === undefined) {
       return this.args;
     }
-    this.args = args;
+    this.args = a;
     return this;
   }
 
