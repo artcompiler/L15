@@ -245,6 +245,25 @@ var Model = (function () {
   OpToLaTeX[OpStr.BINOM] = "\\binom";
   OpToLaTeX[OpStr.COLON] = "\\colon";
 
+  Model.fold = function fold(node, env) {
+    var args = [], val;
+    forEach(node.args, function (n) {
+      args.push(fold(n, env));
+    });
+    node.args = args;
+    switch (node.op) {
+    case OpStr.VAR:
+      if ((val = env[node.args[0]])) {
+        node = val;  // Replace var node with its value.
+      }
+      break;
+    default:
+      // Nothing to fold.
+      break;
+    }
+    return node;
+  }
+
   // Render an AST to LaTex
   var render = function render(n) {
     var text = "";
