@@ -1466,15 +1466,22 @@ var Model = (function () {
           tk = TK_VAR;   // e.g. \\theta
         } else if (tk === TK_TEXT) {
           var c = src.charCodeAt(curIndex++);
+          // Skip whitespace before '{'
           while (c !== "{".charCodeAt(0)) {
-            lexeme += String.fromCharCode(c);
             c = src.charCodeAt(curIndex++);
           }
           lexeme = "";
           var c = src.charCodeAt(curIndex++);
           while (c !== "}".charCodeAt(0)) {
             var ch = String.fromCharCode(c);
-            lexeme += ch;
+            if (ch === "&" && src.substring(curIndex).indexOf("nbsp;") === 0) {
+              // Skip &nbsp;
+              curIndex += 5;
+            } else if (ch === " " || ch === "\t") {
+              // Skip space and tab
+            } else {
+              lexeme += ch;
+            }
             c = src.charCodeAt(curIndex++);
           }
           if (Model.option("ignoreText")) {
