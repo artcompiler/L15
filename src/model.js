@@ -1320,7 +1320,12 @@ var Model = (function () {
           case 10:  // new line
           case 13:  // carriage return
             continue;
-          case 38:  // ampersand (new column)
+          case 38:  // ampersand (new column or entity)
+            if (src.substring(curIndex).indexOf("nbsp;") === 0) {
+              // Skip &nbsp;
+              curIndex += 5;
+              continue;
+            }
             return TK_NEWCOL;
           case 92:  // backslash
             lexeme += String.fromCharCode(c);
