@@ -646,11 +646,7 @@ var Model = (function () {
       case TK_NUM:
         e = numberNode(lexeme());
         next();
-        if (hd()===TK_PM) {
-          next();
-          e = binaryNode(Model.PM, [e, numberNode(lexeme())]);
-          next();
-        } else if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
+        if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // 3+, ion
           e = unaryNode(t, [e]);
