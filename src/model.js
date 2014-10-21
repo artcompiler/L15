@@ -94,6 +94,7 @@ var Model = (function () {
   Assert.messages[1003] = "Extra characters in input at position: %1, lexeme: %2.";
   Assert.messages[1004] = "Invalid character '%1' (%2) in input.";
   Assert.messages[1005] = "Misplaced thousands separator.";
+  Assert.messages[1006] = "Unexpected expression: %1";
   var message = Assert.message;
 
   // Create a model from a node object or expression string
@@ -826,7 +827,7 @@ var Model = (function () {
         next();
         return newNode(Model.M, [multiplicativeExpr()]);
       default:
-        assert(false, "Model.primaryExpr() unexpected expression kind " + lexeme());
+        assert(false, message(1006, [lexeme()]));
         e = void 0;
         break;
       }
