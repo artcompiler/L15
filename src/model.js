@@ -878,7 +878,7 @@ var Model = (function () {
       eat(tk);
       var e = commaExpr();
       eat(tk2 = hd() === TK_RIGHTPAREN ? TK_RIGHTPAREN : TK_RIGHTBRACKET);
-      if (e.args.length !== 2 &&
+      if (!Model.option("allowInterval") &&
           (tk === TK_LEFTBRACKET || tk2 === TK_RIGHTBRACKET)) {
         assert(false, message(1002));
       }
