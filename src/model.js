@@ -889,9 +889,9 @@ var Model = (function () {
       if (Model.option("allowInterval") && e.args.length === 2 &&
           (tk === TK_LEFTPAREN || tk === TK_LEFTBRACKET) &&
           (tk2 === TK_RIGHTPAREN || tk2 === TK_RIGHTBRACKET)) {
-        e = unaryNode(Model.INTERVAL, [e]);
+        e.op = Model.INTERVAL;
       } else if (e.op === Model.COMMA) {
-        e = unaryNode(Model.LIST, [e]);
+        e.op = Model.LIST;
       }
       return e;
     }
