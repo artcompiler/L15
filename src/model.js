@@ -521,6 +521,7 @@ var Model = (function () {
     function numberNode(n0, doScale, roundOnly) {
       // doScale - scale n if true
       // roundOnly - only scale if rounding
+      var ignoreTrailingZeros = Model.option("ignoreTrailingZeros");
       var n1 = n0.toString();
       var n2 = "";
       var i, ch;
@@ -544,7 +545,7 @@ var Model = (function () {
           }
           n2 += ch;
         }
-        if (numberFormat === "decimal" && ch !== "0") {
+        if (ignoreTrailingZeros && numberFormat === "decimal" && ch !== "0") {
           lastSignificantIndex = i;
         }
       }
