@@ -90,7 +90,7 @@ var Model = (function () {
   // Add messages here
   Assert.reserveCodeRange(1000, 1999, "model");
   Assert.messages[1001] = "Invalid syntax. '%1' expected, '%2' found.";
-  Assert.messages[1002] = "Square brackets can only be used to denote intervals.";
+  Assert.messages[1002] = "Unused.";
   Assert.messages[1003] = "Extra characters in input at position: %1, lexeme: %2.";
   Assert.messages[1004] = "Invalid character '%1' (%2) in input.";
   Assert.messages[1005] = "Misplaced thousands separator.";
@@ -886,10 +886,12 @@ var Model = (function () {
       var tk2;
       eat(tk);
       var e = commaExpr();
-      eat(tk2 = hd() === TK_RIGHTPAREN ? TK_RIGHTPAREN : TK_RIGHTBRACKET);
-      if (!Model.option("allowInterval") &&
-          (tk === TK_LEFTBRACKET || tk2 === TK_RIGHTBRACKET)) {
-        assert(false, message(1002));
+      if (Model.option("allowInterval")) {
+        // (..], [..], [..), (..)
+        eat(tk2 = hd() === TK_RIGHTPAREN ? TK_RIGHTPAREN : TK_RIGHTBRACKET);
+      } else {
+        // (..), [..]
+        eat(tk2 = tk === TK_LEFTPAREN ? TK_RIGHTPAREN : TK_RIGHTBRACKET);
       }
       // Save the brackets as attributes on the node for later use.
       e.lbrk = tk;
