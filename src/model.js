@@ -542,11 +542,15 @@ var Model = (function () {
               assert(false, message(1005));
             }
             hasSeparator = false;  // No longer need to worry about thousands separators.
+            if (ignoreTrailingZeros) {
+              // Don't count the decimal point as significant.
+              // so that 2.0 and 2 are equiv.
+              lastSignificantIndex = i - 1;
+            }
+          } else if (ignoreTrailingZeros && numberFormat === "decimal" && ch !== "0") {
+            lastSignificantIndex = i;
           }
           n2 += ch;
-        }
-        if (ignoreTrailingZeros && numberFormat === "decimal" && ch !== "0") {
-          lastSignificantIndex = i;
         }
       }
       if (hasSeparator && lastSeparatorIndex !== i - 4) {
