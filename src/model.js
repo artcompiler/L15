@@ -553,8 +553,6 @@ var Model = (function () {
             hasSeparator = false;  // No longer need to worry about thousands separators.
             if (n2 === "0") {
               hasLeadingZero = true;
-            } else if (n2 === "") {
-              n2 = "0"; // Normalize with leading zero
             }
             // Don't count the decimal point as significant so that 2.0 and 2 are equiv.
             lastSignificantIndex = i - 1;
@@ -575,8 +573,8 @@ var Model = (function () {
           n2 = n2.substring(0, lastSignificantIndex + 1);
         }
       }
+      n2 = new BigDecimal(n2);   // Normalize representation
       if (doScale) {
-        n2 = new BigDecimal(n2);
         var scale = option("decimalPlaces")
         if (!roundOnly || n2.scale() > scale) {
           n2 = n2.setScale(scale, BigDecimal.ROUND_HALF_UP);
@@ -584,7 +582,7 @@ var Model = (function () {
       }
       return {
         op: Model.NUM,
-        args: [n2],
+        args: [String(n2)],
         hasThousandsSeparator: hasSeparator,
         numberFormat: numberFormat,
         hasLeadingZero: hasLeadingZero,
