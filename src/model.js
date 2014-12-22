@@ -223,6 +223,7 @@ var Model = (function () {
     COL: "col",
     COLON: "colon",
     MATRIX: "matrix",
+    FORMAT: "format",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -469,6 +470,7 @@ var Model = (function () {
     var TK_ARCCOS = 0x124;
     var TK_ARCTAN = 0x125;
     var TK_DIV = 0x126;
+    var TK_FORMAT = 0x127;
     var T0 = TK_NONE, T1 = TK_NONE;
     // Define mapping from token to operator
     var tokenToOperator = {};
@@ -517,6 +519,7 @@ var Model = (function () {
     tokenToOperator[TK_NEWROW] = OpStr.ROW;
     tokenToOperator[TK_NEWCOL] = OpStr.COL;
     tokenToOperator[TK_COLON] = OpStr.COLON;
+    tokenToOperator[TK_FORMAT] = OpStr.FORMAT;
 
     function newNode(op, args) {
       return {
@@ -851,6 +854,9 @@ var Model = (function () {
       case TK_M:
         next();
         return newNode(Model.M, [multiplicativeExpr()]);
+      case TK_FORMAT:
+        next();
+        return newNode(Model.FORMAT, [braceExpr()]);
       default:
         assert(false, message(1006, [lexeme()]));
         e = void 0;
@@ -1062,6 +1068,7 @@ var Model = (function () {
         } else if (t === TK_SLASH) {
           t = args.pop();
           expr = newNode(Model.FRAC, [t, expr]);
+          expr.isFraction = true;
         }
         if (isChemCore() && t === TK_LEFTPAREN && isVar(args[args.length-1], "M")) {
           // M(x) -> \M(x)
@@ -1360,6 +1367,7 @@ var Model = (function () {
         "\\lvert": TK_VERTICALBAR,
         "\\rvert": TK_VERTICALBAR,
         "\\mid": TK_VERTICALBAR,
+        "\\format": TK_FORMAT,
       };
       var identifiers = keys(env);
       // Return a scanner object.
