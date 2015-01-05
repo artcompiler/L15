@@ -1174,22 +1174,20 @@ var Model = (function () {
       if (typeof n === "number") {
         return -n;
       } else if (n.args.length === 1) {
-        if (n.op === Model.SUB) {
-          return n.args[0];  // strip the unary minus
-        } else if (n.op === Model.ADD) {
-          n.args[0] = negate(n.args[0]);
-          return n;
-        } else if (n.op === Model.NUM) {
-          var arg0 = n.args[0];
-          if (arg0.charAt(0) === "-") {
-            arg0 = arg0.substring(1);
-          } else {
-            arg0 = "-" + arg0;
-          }
-          return numberNode(arg0);
-        } else {
+//        if (n.op === Model.ADD) {
+//          n.args[0] = negate(n.args[0]);
+//          return n;
+//        } else if (n.op === Model.NUM) {
+//          var arg0 = n.args[0];
+//          if (arg0.charAt(0) === "-") {
+//            arg0 = arg0.substring(1);
+//          } else {
+//            arg0 = "-" + arg0;
+//          }
+//          return numberNode(arg0);
+//        } else {
           return multiplyNode([nodeMinusOne, n]);
-        }
+//        }
       } else if (n.op === Model.MUL) {
         n.args.unshift(nodeMinusOne);
         return n;
