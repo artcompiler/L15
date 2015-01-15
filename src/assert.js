@@ -123,6 +123,21 @@ var clearLocation = function () {
   Assert.location = null;
 }
 
+var setCounter = function (count, message) {
+  Assert.count = count;
+  Assert.countMessage = message ? message : "ERROR count exceeded";
+}
+
+var checkCounter = function () {
+  var count = Assert.count;
+  if (typeof count !== "number" || isNaN(count)) {
+    assert(false, "ERROR counter not set");
+    return;
+  }
+  assert(Assert.count--, Assert.countMessage);
+}
+    
+
 // Namespace functions for safe keeping.
 var Assert = {
   assert: assert,
@@ -132,4 +147,6 @@ var Assert = {
   reservedCodes: [],
   setLocation: setLocation,
   clearLocation: clearLocation,
+  setCounter: setCounter,
+  checkCounter: checkCounter,
 };
