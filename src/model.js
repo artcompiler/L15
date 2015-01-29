@@ -90,12 +90,13 @@ var Model = (function () {
   // Add messages here
   Assert.reserveCodeRange(1000, 1999, "model");
   Assert.messages[1001] = "Invalid syntax. '%1' expected, '%2' found.";
-  Assert.messages[1002] = "Unused.";
+  Assert.messages[1002] = "Only one decimal separator can be specified.";
   Assert.messages[1003] = "Extra characters in input at position: %1, lexeme: %2.";
   Assert.messages[1004] = "Invalid character '%1' (%2) in input.";
   Assert.messages[1005] = "Misplaced thousands separator.";
   Assert.messages[1006] = "Unexpected expression: %1";
   Assert.messages[1007] = "Unexpected character: '%1' in '%2'.";
+  Assert.messages[1008] = "The same character '%1' is being used as a thousands and decimal separators.";
   var message = Assert.message;
 
   // Create a model from a node object or expression string
@@ -530,25 +531,44 @@ var Model = (function () {
     }
 
     function matchThousandsSeparator(ch, last) {
-      var separators = Model.option("allowThousandsSeparator");
-      if (!(separators instanceof Array)) {
-        // Legacy, true means comma.
-        return separators && ch === ',' ? ch : '';
-      } else {
-        // If the character matches the last separator or, if not, is in the
-        // provided list, return the character.
-        return ch === last || last === undefined && separators.indexOf(ch) >= 0 ? ch : '';
+      // Check separator and return if there is a match.
+      if (Model.option("allowThousandsSeparator")) {
+        var separators = Model.option("setThousandsSeparator");
+        if (separators === undefined) {
+          // Use defaults.
+          return ch === ',' ? ch : '';
+        } else {
+          // If the character matches the last separator or, if not, last is undefiend
+          // and character is in the provided list, return the character.
+          return ch === last || last === undefined && separators.indexOf(ch) >= 0 ? ch : '';
+        }
       }
+      // Not allowed. Will be treated as punctuation of some other kind.
+      return '';
     }
 
     function getDecimalSeparator() {
       // We use the thousands separator to determine the conventional decimal
       // separator. If TS is ',' then DS is '.', otherwise DS is ','.
-      var separators = Model.option("allowThousandsSeparator");
-      if (separators instanceof Array && separators.indexOf(',') < 0) {
-        // Comma is not used as a thousands separator, so it is used as a
+      var decimalSeparator = Model.option("setDecimalSeparator");
+      var thousandsSeparators = Model.option("setThousandsSeparator");
+      if (decimalSeparator instanceof Array) {
+        assert(decimalSeparator.length === 1, message(1002));
+        var separator = decimalSeparator[0];
+        if (thousandsSeparators instanceof Array &&
+            thousandsSeparators.indexOf(separator) >= 0) {
+          // There is a conflict between the decimal separator and the
+          // thousands separator.
+          assert(false, message(2008, [separator]));
+          return '.';
+        }
+        return separator;
+      } 
+      if (thousandsSeparators instanceof Array && thousandsSeparators.indexOf('.') >= 0) {
+        // Period is used as a thousands separator, so cannot be used as a
         // decimal separator.
-        return ',';
+        assert(false, message(2008));
+        return '.';
       }
       // Otherwise, period is used as the decimal separator.
       return ".";
