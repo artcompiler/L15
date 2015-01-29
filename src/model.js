@@ -534,7 +534,7 @@ var Model = (function () {
       // Check separator and return if there is a match.
       if (Model.option("allowThousandsSeparator")) {
         var separators = Model.option("setThousandsSeparator");
-        if (separators === undefined) {
+        if (!separators) {
           // Use defaults.
           return ch === ',' ? ch : '';
         } else {
