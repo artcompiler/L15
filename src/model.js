@@ -540,7 +540,11 @@ var Model = (function () {
         } else {
           // If the character matches the last separator or, if not, last is undefiend
           // and character is in the provided list, return the character.
-          return ch === last || last === undefined && separators.indexOf(ch) >= 0 ? ch : '';
+          if (ch === last || !last && separators.indexOf(ch) >= 0) {
+            return ch;
+          } else {
+            return "";
+          }
         }
       }
       // Not allowed. Will be treated as punctuation of some other kind.
