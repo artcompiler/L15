@@ -1043,11 +1043,11 @@ var Model = (function () {
       switch (t = hd()) {
       case TK_ADD:
         next();
-        expr = unaryExpr();
+        expr = postfixExpr();
         break;
       case TK_SUB:
         next();
-        expr = negate(unaryExpr());
+        expr = negate(postfixExpr());
         break;
       case TK_PM:
       case TK_CARET:
@@ -1242,10 +1242,9 @@ var Model = (function () {
     function negate(n) {
       if (typeof n === "number") {
         return -n;
-      } else if (n.op === Model.NUM &&
-                 n.args[0] === "1") {
+      } else if (n.op === Model.NUM) {
         // -1 is a special case.
-        return nodeMinusOne;
+        return numberNode("-" + n.args[0]);
       } else if (n.op === Model.MUL) {
         n.args.unshift(nodeMinusOne);
         return n;
