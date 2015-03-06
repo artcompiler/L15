@@ -795,7 +795,7 @@ var Model = (function () {
           break;
         case TK_LEFTBRACE:
           var base = braceExpr();
-          e = newNode(Model.POW, [base, newNode(Model.NUM, ["2"]), nodeMinusOne]);
+          e = newNode(Model.POW, [base, newNode(Model.POW, [newNode(Model.NUM, ["2"]), nodeMinusOne])]);
           break;
         default:
           assert(false, message(1001, ["{ or (", String.fromCharCode(hd())]));
