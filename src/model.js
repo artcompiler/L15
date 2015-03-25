@@ -1087,6 +1087,15 @@ var Model = (function () {
         return args[0];
       }
     }
+    // Parse '1/2/3/4'
+    function fractionExpr() {
+      var t, node = subscriptExpr();
+      while ((t=hd())===TK_SLASH) {
+        next();
+        node = newNode(Model.FRAC, [node, subscriptExpr()]);
+      }
+      return node;
+    }
     //
     function isChemSymbol(n) {
       if (n.op !== Model.VAR) {
@@ -1114,7 +1123,7 @@ var Model = (function () {
     // Parse 'a \times b', 'a * b'
     function multiplicativeExpr() {
       var t, expr, explicitOperator = false, prevExplicitOperator, isFraction, args = [];
-      expr = subscriptExpr();
+      expr = fractionExpr();
       if (expr.op === Model.MUL && !expr.isBinomial) {
         // FIXME binomials and all other significant syntax should not be desugared
         // during parsing. It breaks equivLiteral and equivSyntax.
@@ -1135,14 +1144,9 @@ var Model = (function () {
           next();
           explicitOperator = true;
         }
-        expr = subscriptExpr();
+        expr = fractionExpr();
         if (t === TK_DIV) {
           expr = newNode(Model.POW, [expr, nodeMinusOne]);
-        } else if (t === TK_SLASH) {
-          t = args.pop();
-          expr = newNode(Model.FRAC, [t, expr]);
-          expr.isFraction = true;
-          explicitOperator = prevExplicitOperator;
         }
         if (isChemCore() && t === TK_LEFTPAREN && isVar(args[args.length-1], "M")) {
           // M(x) -> \M(x)
