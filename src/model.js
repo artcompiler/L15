@@ -1093,6 +1093,7 @@ var Model = (function () {
       while ((t=hd())===TK_SLASH) {
         next();
         node = newNode(Model.FRAC, [node, subscriptExpr()]);
+        node.isFraction = true;
       }
       return node;
     }
@@ -1192,7 +1193,6 @@ var Model = (function () {
           }
         } else {
           expr = multiplyNode(args);
-          expr.isFraction = isFraction;
           return expr;
         }
       } else {
@@ -1211,8 +1211,12 @@ var Model = (function () {
     function isMixedFraction(args) {
       // 3 \frac{1}{2}
       if (args[0].op === Model.NUM &&
+          args[0].numberFormat === "integer" &&
           args[1].op === Model.FRAC &&
-          args[1].args[0].op === Model.NUM) {
+          args[1].args[0].op === Model.NUM &&
+          args[1].args[0].numberFormat === "integer" &&
+          args[1].args[1].op === Model.NUM &&
+          args[1].args[1].numberFormat === "integer") {
         return true;
       }
       return false;
