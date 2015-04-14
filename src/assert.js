@@ -86,7 +86,6 @@ var assert = (function () {
         str = "failed!";
       }
       if ( !val ) {
-        
         var err = new Error(str);
         err.location = Assert.location;
         throw err;

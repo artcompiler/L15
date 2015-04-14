@@ -1003,7 +1003,7 @@ var Model = (function () {
       while ((t=hd())===TK_CARET) {
         next();
         var t;
-        if ((isMathSymbol(args[0]) || isChemCore() && isChemSymbol(args[0])) &&
+        if ((isMathSymbol(args[0]) || isChemCore() && args[0].op === Model.VAR) &&
             ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // Na^+
