@@ -1314,7 +1314,7 @@ var Model = (function () {
       } else {
         var expr = additiveExpr();
       }
-      var list;
+      var args = [];
       while (isRelational(t = hd())) {
         // x < y < z -> [x < y, y < z]
         next();
@@ -1325,17 +1325,16 @@ var Model = (function () {
           var expr2 = additiveExpr();
         }
         expr = newNode(tokenToOperator[t], [expr, expr2]);
-        if (list === undefined) {
-          list = expr;
-        } else {
-          list = newNode(Model.COMMA, [list, expr]);
-        }
+        args.push(expr);
         expr = expr2;
       }
-      if (list === undefined) {
-        list = expr;
+      if (args.length === 0) {
+        return expr;
+      } else if (args.length === 1) {
+        return args[0];
+      } else {
+        return newNode(Model.COMMA, args);
       }
-      return list;
     }
     // Parse 'x = 10'
     function equalExpr() {
