@@ -1314,21 +1314,28 @@ var Model = (function () {
       } else {
         var expr = additiveExpr();
       }
+      var list;
       while (isRelational(t = hd())) {
+        // x < y < z -> [x < y, y < z]
         next();
         if (hd() === 0) {
-          // Leading '=' so synthesize a variable.
+          // Trailing '=' so synthesize a variable.
           var expr2 = newNode(Model.VAR, ["_"]);
         } else {
           var expr2 = additiveExpr();
         }
-        switch(t) {
-        default:
-          expr = newNode(tokenToOperator[t], [expr, expr2]);
-          break;
+        expr = newNode(tokenToOperator[t], [expr, expr2]);
+        if (list === undefined) {
+          list = expr;
+        } else {
+          list = newNode(Model.COMMA, [list, expr]);
         }
+        expr = expr2;
       }
-      return expr;
+      if (list === undefined) {
+        list = expr;
+      }
+      return list;
     }
     // Parse 'x = 10'
     function equalExpr() {
