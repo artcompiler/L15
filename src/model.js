@@ -226,7 +226,6 @@ var Model = (function () {
     COLON: "colon",
     MATRIX: "matrix",
     FORMAT: "format",
-    ION: "ion",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -735,7 +734,7 @@ var Model = (function () {
         } else if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // e+, ion
-          e = unaryNode(Model.ION, [unaryNode(tokenToOperator[t], [e])]);
+          e = unaryNode(tokenToOperator[t], [e]);
         }
 
         e = newNode(Model.VAR, args);
@@ -746,7 +745,7 @@ var Model = (function () {
         if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // 3+, ion
-          e = unaryNode(Model.ION, [unaryNode(tokenToOperator[t], [e])]);
+          e = unaryNode(tokenToOperator[t], [e]);
         }
         break;
       case TK_LEFTPAREN:
@@ -1010,11 +1009,7 @@ var Model = (function () {
           args.push(unaryNode(tokenToOperator[t], [nodeOne]));
         } else {
           var n = unaryExpr();
-          if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
-            next();
-            // Al^3+, Al^{3+}
-            args.push(unaryNode(tokenToOperator[t], [n]));
-          } else if (n.op === Model.VAR && n.args[0] === "\\circ") {
+          if (n.op === Model.VAR && n.args[0] === "\\circ") {
             // 90^{\circ} -> 90\degree
             args = [
               multiplyNode([args[0], newNode(Model.VAR, ["\\degree"])])
