@@ -1099,10 +1099,15 @@ var Model = (function () {
     }
     //
     function isChemSymbol(n) {
-      if (n.op !== Model.VAR) {
+      var id;
+      if (n.op === Model.VAR) {
+        id = n.args[0];
+      } else if (n.op === Model.POW) {
+        id = n.args[0].args[0];
+      } else {
         return false;
       }
-      var sym = Model.env[n.args[0]];
+      var sym = Model.env[id];
       return sym && sym.mass ? true : false;   // Has mass so must be (?) a chem symbol.
     }
     //
