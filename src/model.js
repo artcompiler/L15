@@ -799,7 +799,7 @@ var Model = (function () {
         case TK_LEFTBRACKET:
           var root = bracketExpr();
           var base = braceExpr();
-          e = newNode(Model.POW, [base, root, nodeMinusOne]);
+          e = newNode(Model.POW, [base, newNode(Model.POW, [root, nodeMinusOne])]);
           break;
         case TK_LEFTBRACE:
           var base = braceExpr();
