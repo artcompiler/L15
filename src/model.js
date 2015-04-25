@@ -658,7 +658,7 @@ var Model = (function () {
     // Construct a unary node.
     function unaryNode(op, args) {
       assert(args.length === 1, "Wrong number of arguments for unary node");
-      if (op === Model.ADD && !isChemCore()) {  // Don't erase ions
+      if (op === Model.ADD) {
         return args[0];
       } else {
         return newNode(op, args);
@@ -1008,11 +1008,7 @@ var Model = (function () {
           args.push(unaryNode(tokenToOperator[t], [nodeOne]));
         } else {
           var n = unaryExpr();
-          if (isChemCore() && n.op === Model.NUM &&
-              ((t = hd()) === TK_ADD || t === TK_SUB)) {
-            n = unaryNode(tokenToOperator[t], [n]);
-            next();
-          } else if (n.op === Model.VAR && n.args[0] === "\\circ") {
+          if (n.op === Model.VAR && n.args[0] === "\\circ") {
             // 90^{\circ} -> 90\degree
             args = [
               multiplyNode([args[0], newNode(Model.VAR, ["\\degree"])])
