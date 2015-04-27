@@ -687,8 +687,8 @@ var Model = (function () {
     // Manage the token stream.
     var scan = scanner(src);
     // Prime the token stream.
-    function start() {
-      T0 = scan.start();
+    function start(options) {
+      T0 = scan.start(options);
     }
     // Get the current token.
     function hd() {
@@ -699,22 +699,22 @@ var Model = (function () {
       return scan.lexeme();
     }
     // Advance the next token.
-    function next() {
+    function next(options) {
       T0 = T1;
       T1 = TK_NONE;
       if (T0 === TK_NONE) {
-        T0 = scan.start();
+        T0 = scan.start(options);
       }
     }
     // Consume the current token if it matches, otherwise throw.
-    function eat(tc) {
+    function eat(tc, options) {
       var tk = hd();
       if (tk !== tc) {
         var expected = String.fromCharCode(tc);
         var found = tk ? String.fromCharCode(tk) : "EOS";
         assert(false, message(1001, [expected, found]));
       }
-      next();
+      next(options);
     }
     // Begin parsing functions.
     function primaryExpr () {
@@ -729,7 +729,7 @@ var Model = (function () {
         next();
         // Collect the subscript if there is one. Subscripts make multipart variable names.
         if ((t=hd())===TK_UNDERSCORE) {
-          next();
+          next({oneCharToken: true});
           args.push(primaryExpr());   // {op:VAR, args:["Fe", "2"]}
         } else if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
@@ -821,7 +821,7 @@ var Model = (function () {
         var t, args = [];
         // Collect exponents if there are any
         while ((t=hd())===TK_CARET) {
-          next();
+          next({oneCharToken: true});
           args.push(unaryExpr());
         }
 
@@ -849,7 +849,7 @@ var Model = (function () {
         var t, args = [];
         // Collect exponents if there are any
         while ((t=hd())===TK_CARET) {
-          next();
+          next({oneCharToken: true});
           args.push(unaryExpr());
         }
         args.unshift(newNode(tokenToOperator[tk], [primaryExpr()]));
@@ -870,7 +870,7 @@ var Model = (function () {
         var t, args = [];
         // Collect the subscript if there is one
         if ((t=hd())===TK_UNDERSCORE) {
-          next();
+          next({oneCharToken:true});
           args.push(primaryExpr());
         } else {
           args.push(newNode(Model.VAR, ["e"]));    // default to natural log
@@ -896,9 +896,9 @@ var Model = (function () {
         var t, args = [];
         // Collect the subscript and expression
         if (hd() === TK_UNDERSCORE) {
-          next();
+          next({oneCharToken: true});
           args.push(primaryExpr());
-          eat(TK_CARET);              // If we have a subscript, then we expect a superscript
+          eat(TK_CARET, {oneCharToken: true});              // If we have a subscript, then we expect a superscript
           args.push(primaryExpr());
         }
         args.push(commaExpr());
@@ -999,7 +999,7 @@ var Model = (function () {
     function exponentialExpr() {
       var t, args = [primaryExpr()];
       while ((t=hd())===TK_CARET) {
-        next();
+        next({oneCharToken: true});
         var t;
         if ((isMathSymbol(args[0]) || isChemCore() && args[0].op === Model.VAR) &&
             ((t = hd()) === TK_ADD || t === TK_SUB)) {
@@ -1074,8 +1074,12 @@ var Model = (function () {
         expr = negate(postfixExpr());
         break;
       case TK_PM:
-      case TK_CARET:
         next();
+        expr = unaryExpr();
+        expr = newNode(tokenToOperator[t], [expr]);
+        break;
+      case TK_CARET:
+        next({oneCharToken: true});
         expr = unaryExpr();
         expr = newNode(tokenToOperator[t], [expr]);
         break;
@@ -1089,7 +1093,7 @@ var Model = (function () {
     function subscriptExpr() {
       var t, args = [unaryExpr()];
       while ((t=hd())===TK_UNDERSCORE) {
-        next();
+        next({oneCharToken: true});
         args.push(unaryExpr());
       }
       if (args.length > 1) {
@@ -1479,7 +1483,10 @@ var Model = (function () {
         return c >= 48 && c <= 57;
       }
       // Start scanning for one token.
-      function start () {
+      function start(options) {
+        if (!options) {
+          options = {};
+        }
         var c;
         lexeme = "";
         while (curIndex < src.length) {
@@ -1553,6 +1560,10 @@ var Model = (function () {
               return variable(c);
             } else if (String.fromCharCode(c) === getDecimalSeparator() ||
                        isNumberCharCode(c)) {
+              if (options.oneCharToken) {
+                lexeme += String.fromCharCode(c);
+                return TK_NUM;
+              }
               return number(c);
             }
             else {
