@@ -731,12 +731,19 @@ var Model = (function () {
         if ((t=hd())===TK_UNDERSCORE) {
           next({oneCharToken: true});
           args.push(primaryExpr());   // {op:VAR, args:["Fe", "2"]}
-        } else if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
-          next();
-          // e+, ion
-          e = unaryNode(tokenToOperator[t], [e]);
         }
         e = newNode(Model.VAR, args);
+        if (isChemCore()) {
+          if ((t = hd()) === TK_ADD || t === TK_SUB) {
+            next();
+            // e+, ion
+            e = unaryNode(tokenToOperator[t], [e]);
+          } else if (hd() === TK_LEFTBRACE) {
+            // C_2{}^3 -> C_2^3
+            eat(TK_LEFTBRACE);
+            eat(TK_RIGHTBRACE);
+          }
+        }
         break;
       case TK_NUM:
         e = numberNode(lexeme());
