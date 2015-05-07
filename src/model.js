@@ -484,6 +484,7 @@ var Model = (function () {
     tokenToOperator[TK_SUB] = OpStr.SUB;
     tokenToOperator[TK_PM] = OpStr.PM;
     tokenToOperator[TK_CARET] = OpStr.POW;
+    tokenToOperator[TK_UNDERSCORE] = OpStr.SUBSCRIPT;
     tokenToOperator[TK_MUL] = OpStr.MUL;
     tokenToOperator[TK_DIV] = OpStr.DIV;
     tokenToOperator[TK_SIN] = OpStr.SIN;
@@ -1085,10 +1086,22 @@ var Model = (function () {
         expr = unaryExpr();
         expr = newNode(tokenToOperator[t], [expr]);
         break;
+      case TK_UNDERSCORE:
       case TK_CARET:
-        next({oneCharToken: true});
-        expr = unaryExpr();
-        expr = newNode(tokenToOperator[t], [expr]);
+        if (isChemCore()) {
+          var op = tokenToOperator[t];
+          next({oneCharToken: true});
+          if ((t = hd()) === TK_ADD || t === TK_SUB) {
+            next();
+            // ^+, ^-
+            expr = nodeOne;
+          } else {
+            expr = unaryExpr();
+          }
+          expr = newNode(op, [expr]);
+        } else {
+          expr = postfixExpr();
+        }
         break;
       default:
         expr = postfixExpr();
