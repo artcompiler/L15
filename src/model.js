@@ -1102,9 +1102,15 @@ var Model = (function () {
         } else {
           expr = postfixExpr();
         }
-        break;
+        break;      
       default:
-        expr = postfixExpr();
+        if (t === TK_VAR && lexeme() === "$") {
+          next();
+          // Give $1 a higher precedence than ordinary multiplication.
+          expr = multiplyNode([newNode(Model.VAR, ["$"]), postfixExpr()]);
+        } else {
+          expr = postfixExpr();
+        }
         break;
       }
       return expr;
