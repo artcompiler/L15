@@ -1088,26 +1088,27 @@ var Model = (function () {
         break;
       case TK_UNDERSCORE:
       case TK_CARET:
-        if (isChemCore()) {
-          var op = tokenToOperator[t];
-          next({oneCharToken: true});
-          if ((t = hd()) === TK_ADD || t === TK_SUB) {
-            next();
-            // ^+, ^-
-            expr = nodeOne;
-          } else {
-            expr = unaryExpr();
-          }
-          expr = newNode(op, [expr]);
+        var op = tokenToOperator[t];
+        next({oneCharToken: true});
+        if ((t = hd()) === TK_ADD || t === TK_SUB) {
+          next();
+          // ^+, ^-
+          expr = nodeOne;
         } else {
-          expr = postfixExpr();
+          expr = unaryExpr();
         }
+        expr = newNode(op, [expr]);
         break;      
       default:
         if (t === TK_VAR && lexeme() === "$") {
           next();
-          // Give $1 a higher precedence than ordinary multiplication.
-          expr = multiplyNode([newNode(Model.VAR, ["$"]), postfixExpr()]);
+          if (hd()) {
+            // Give $1 a higher precedence than ordinary multiplication.
+            expr = multiplyNode([newNode(Model.VAR, ["$"]), postfixExpr()]);
+          } else {
+            // Standalone "$". Probably not useful but we had a test case for it.
+            expr = newNode(Model.VAR, ["$"]);
+          }
         } else {
           expr = postfixExpr();
         }
