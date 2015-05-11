@@ -226,6 +226,9 @@ var Model = (function () {
     COLON: "colon",
     MATRIX: "matrix",
     FORMAT: "format",
+    OVERSET: "overset",
+    UNDERSET: "underset",
+    OVERLINE: "overline",
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -473,6 +476,9 @@ var Model = (function () {
     var TK_ARCTAN = 0x125;
     var TK_DIV = 0x126;
     var TK_FORMAT = 0x127;
+    var TK_OVERLINE = 0x128;
+    var TK_OVERSET = 0x129;
+    var TK_UNDERSET = 0x12A;
     var T0 = TK_NONE, T1 = TK_NONE;
     // Define mapping from token to operator
     var tokenToOperator = {};
@@ -523,6 +529,9 @@ var Model = (function () {
     tokenToOperator[TK_NEWCOL] = OpStr.COL;
     tokenToOperator[TK_COLON] = OpStr.COLON;
     tokenToOperator[TK_FORMAT] = OpStr.FORMAT;
+    tokenToOperator[TK_OVERLINE] = OpStr.OVERLINE;
+    tokenToOperator[TK_OVERSET] = OpStr.OVERSET;
+    tokenToOperator[TK_UNDERSET] = OpStr.UNDERSET;
 
     function newNode(op, args) {
       return {
@@ -928,6 +937,18 @@ var Model = (function () {
       case TK_FORMAT:
         next();
         return newNode(Model.FORMAT, [braceExpr()]);
+      case TK_OVERLINE:
+        next();
+        return newNode(Model.OVERSLINE, [braceExpr()]);
+      case TK_OVERSET:
+      case TK_UNDERSET:
+        next();
+        var expr1 = braceExpr();
+        var expr2 = braceExpr();
+        // Add the annotation to the variable.
+        expr2.args.push(newNode(tokenToOperator[tk], [expr1]));
+        return expr2;
+        break;
       default:
         assert(false, message(1006, [lexeme()]));
         e = void 0;
@@ -1119,9 +1140,16 @@ var Model = (function () {
     // Parse 'x_2'
     function subscriptExpr() {
       var t, args = [unaryExpr()];
-      while ((t=hd())===TK_UNDERSCORE) {
+      if ((t=hd())===TK_UNDERSCORE) {
         next({oneCharToken: true});
         args.push(unaryExpr());
+        if (isChemCore()) {
+          if (hd() === TK_LEFTBRACE) {
+            // C_2{}^3 -> C_2^3
+            eat(TK_LEFTBRACE);
+            eat(TK_RIGHTBRACE);
+          }
+        }
       }
       if (args.length > 1) {
         return newNode(Model.SUBSCRIPT, args);
@@ -1501,6 +1529,9 @@ var Model = (function () {
         "\\rvert": TK_VERTICALBAR,
         "\\mid": TK_VERTICALBAR,
         "\\format": TK_FORMAT,
+        "\\overline": TK_OVERLINE,
+        "\\overset": TK_OVERSET,
+        "\\underset": TK_UNDERSET,
       };
       var identifiers = keys(env);
       function isAlphaCharCode(c) {
