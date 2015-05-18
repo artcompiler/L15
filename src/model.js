@@ -1422,17 +1422,27 @@ var Model = (function () {
         var expr = relationalExpr();
       }
       var t;
+      var args = [];
       while ((t = hd()) === TK_EQL || t === TK_RIGHTARROW) {
+        // x = y = z -> [x = y, y = z]
         next();
         if (hd() === 0) {
           // Trailing '=' so synthesize a variable.
           var expr2 = newNode(Model.VAR, ["_"]);
         } else {
-          var expr2 = relationalExpr();
+          var expr2 = additiveExpr();
         }
         expr = newNode(tokenToOperator[t], [expr, expr2]);
+        args.push(expr);
+        expr = expr2;
       }
-      return expr;
+      if (args.length === 0) {
+        return expr;
+      } else if (args.length === 1) {
+        return args[0];
+      } else {
+        return newNode(Model.COMMA, args);
+      }
     }
     // Parse 'a, b, c, d'
     function commaExpr( ) {
