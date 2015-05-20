@@ -1222,11 +1222,17 @@ var Model = (function () {
           expr.isMixedFraction = true;
         } else if (!explicitOperator && args.length > 0 &&
                    isRepeatingDecimal([args[args.length-1], expr])) {
-          // 3 \overline{12} -> 3.12 repeating=true
-          t = args.pop();
-          t.args[0] = t.args[0] + "." + expr.args[0].args[0];
-          t.isRepeatingFraction = true;
-          expr = t;
+          // 3.\overline{12} --> 3.0*(0.12, repeating)
+          // 0.3\overline{12} --> 0.3+0.1*(.12, repeating)
+          var n0 = args.pop();
+          var n1 = expr.args[0];
+          n1 = numberNode("." + n1.args[0]);
+          n1.isRepeating = true;
+          if (n0.args[0].indexOf(".") >= 0) {
+            var decimalPlaces = n0.args[0].length - n0.args[0].indexOf(".")- 1;
+            n1 = multiplyNode([n1, binaryNode(Model.POW, [numberNode("10"), numberNode("-" + decimalPlaces)])]);
+          }
+          expr = binaryNode(Model.ADD, [n0, n1]);
         } else if (t === TK_MUL && args.length > 0 && explicitOperator &&
                    isScientific([args[args.length-1], expr])) {
           // 1.2 \times 10 ^ {-3}
@@ -1658,6 +1664,10 @@ var Model = (function () {
             c = 32;
             curIndex++;
           }
+        }
+        if (lexeme === "." && indexOf(src.substring(curIndex), "overline") === 0) {
+          // .\overline --> 0.\overline
+          lexeme = "0.";
         }
         curIndex--;
         return TK_NUM;
