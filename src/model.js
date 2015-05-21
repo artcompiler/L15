@@ -1537,6 +1537,7 @@ var Model = (function () {
         "\\prod": TK_PROD,
         "\\%": TK_PERCENT,
         "\\rightarrow": TK_RIGHTARROW,
+        "\\longrightarrow": TK_RIGHTARROW,
         "\\binom": TK_BINOM,
         "\\begin": TK_BEGIN,
         "\\end": TK_END,
