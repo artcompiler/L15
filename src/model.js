@@ -716,6 +716,12 @@ var Model = (function () {
         T0 = scan.start(options);
       }
     }
+    function lookahead(options) {
+      if (T1 === TK_NONE) {
+        T1 = scan.start(options);
+      }
+      return T1;
+    }
     // Consume the current token if it matches, otherwise throw.
     function eat(tc, options) {
       var tk = hd();
@@ -744,11 +750,7 @@ var Model = (function () {
         }
         e = newNode(Model.VAR, args);
         if (isChemCore()) {
-          if ((t = hd()) === TK_ADD || t === TK_SUB) {
-            next();
-            // e+, ion
-            e = unaryNode(tokenToOperator[t], [e]);
-          } else if (hd() === TK_LEFTBRACE) {
+          if (hd() === TK_LEFTBRACE) {
             // C_2{}^3 -> C_2^3
             eat(TK_LEFTBRACE);
             eat(TK_RIGHTBRACE);
@@ -758,11 +760,6 @@ var Model = (function () {
       case TK_NUM:
         e = numberNode(lexeme());
         next();
-        if (isChemCore() && ((t = hd()) === TK_ADD || t === TK_SUB)) {
-          next();
-          // 3+, ion
-          e = unaryNode(tokenToOperator[t], [e]);
-        }
         break;
       case TK_LEFTPAREN:
       case TK_LEFTBRACKET:
@@ -1030,7 +1027,8 @@ var Model = (function () {
       while ((t=hd())===TK_CARET) {
         next({oneCharToken: true});
         var t;
-        if ((isMathSymbol(args[0]) || isChemCore() && args[0].op === Model.VAR) &&
+        if ((isMathSymbol(args[0]) ||
+             isChemCore() && (args[0].op === Model.VAR || args[0].op === Model.NUM)) &&
             ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // Na^+
@@ -1068,6 +1066,11 @@ var Model = (function () {
         expr = newNode(Model.FACT, [expr]);
         break;
       default:
+        if (isChemCore() && (t === TK_ADD || t === TK_SUB) && lookahead() === TK_RIGHTBRACE) {
+          next();
+          // 3+, ion
+          expr = unaryNode(tokenToOperator[t], [expr]);
+        } // Otherwise we're in the middle of a binary expr.
         break;
       }
       return expr;
@@ -1091,6 +1094,31 @@ var Model = (function () {
         expr = newNode(tokenToOperator[t], [expr]);
         break;
       case TK_UNDERSCORE:
+        // _1, _1^2, _+^-
+        var op = tokenToOperator[t];
+        next({oneCharToken: true});
+        if ((t = hd()) === TK_ADD || t === TK_SUB) {
+          next();
+          // ^+, ^-
+          expr = nodeOne;
+        } else {
+          expr = unaryExpr();
+        }
+        expr = newNode(op, [expr]);
+        if (hd() === TK_CARET) {
+          // _1, _1^2, _+^-
+          var op = tokenToOperator[t];
+          next({oneCharToken: true});
+          if ((t = hd()) === TK_ADD || t === TK_SUB) {
+            next();
+            // ^+, ^-
+            expr = nodeOne;
+          } else {
+            expr = unaryExpr();
+          }
+          expr = newNode(op, [expr]);
+        }
+        break;      
       case TK_CARET:
         var op = tokenToOperator[t];
         next({oneCharToken: true});
@@ -1252,20 +1280,7 @@ var Model = (function () {
         }
       }
       if (args.length > 1) {
-        if (isChemCore() && isChemSymbol(args[1])) {
-          // 2NaCl NaCl
-          if (isNumber(args[0])) {
-            // 2NaCl
-            var coeff = args.shift();
-            return multiplyNode([coeff, binaryNode(Model.ADD, args)]);
-          } else {
-            // NaCl
-            return binaryNode(Model.ADD, args);
-          }
-        } else {
-          expr = multiplyNode(args);
-          return expr;
-        }
+        return multiplyNode(args);
       } else {
         return args[0];
       }
