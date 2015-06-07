@@ -229,6 +229,7 @@ var Model = (function () {
     OVERSET: "overset",
     UNDERSET: "underset",
     OVERLINE: "overline",
+    DEGREE: "degree",
     NONE: "none",
   };
 
@@ -687,6 +688,7 @@ var Model = (function () {
 
     var nodeOne = numberNode("1");
     var nodeMinusOne = numberNode("-1");
+    var nodeNone = newNode(Model.NONE, [numberNode("0")]);
 
     //
     // PARSER
@@ -1024,8 +1026,7 @@ var Model = (function () {
       while ((t=hd())===TK_CARET) {
         next({oneCharToken: true});
         var t;
-        if ((isMathSymbol(args[0]) ||
-             isChemCore() && (args[0].op === Model.VAR || args[0].op === Model.NUM)) &&
+        if ((isMathSymbol(args[0]) || isChemCore()) &&
             ((t = hd()) === TK_ADD || t === TK_SUB)) {
           next();
           // Na^+
@@ -1033,10 +1034,20 @@ var Model = (function () {
         } else {
           var n = unaryExpr();
           if (n.op === Model.VAR && n.args[0] === "\\circ") {
-            // 90^{\circ} -> 90\degree
-            args = [
-              multiplyNode([args[0], newNode(Model.VAR, ["\\degree"])])
-            ];
+            // 90^{\circ} -> degree 90
+            if (hd() === TK_VAR &&
+                lexeme() === "K" || lexeme() === "C" || lexeme() === "F") {
+              n = multiplyNode([
+                args.pop(),
+                unaryNode(Model.VAR, ["\\degree " + lexeme()])]);
+              next();
+            } else {
+              n = multiplyNode([
+                args.pop(),
+                unaryNode(Model.VAR, ["\\degree"])
+              ]);
+            }
+            args.push(n);
           } else {
             // x^2
             args.push(n);
@@ -1063,7 +1074,20 @@ var Model = (function () {
         expr = newNode(Model.FACT, [expr]);
         break;
       default:
-        if (isChemCore() && (t === TK_ADD || t === TK_SUB) && lookahead() === TK_RIGHTBRACE) {
+        if (t === TK_VAR && lexeme() === "\\degree") {
+          next();
+          if (hd() === TK_VAR && (lexeme() === "K" || lexeme() === "C" || lexeme() === "F")) {
+            expr = multiplyNode([
+              expr,
+              unaryNode(Model.VAR, ["\\degree " + lexeme()])]);
+            next();
+          } else {
+            expr = multiplyNode([
+              expr,
+              unaryNode(Model.VAR, ["\\degree"])
+            ]);
+          }
+        } else if (isChemCore() && (t === TK_ADD || t === TK_SUB) && lookahead() === TK_RIGHTBRACE) {
           next();
           // 3+, ion
           expr = unaryNode(tokenToOperator[t], [expr]);
@@ -1486,7 +1510,7 @@ var Model = (function () {
         return n;
       }
       // No meaningful input. Return a dummy node to avoid choking.
-      return newNode(Model.NONE, [numberNode("0")]);
+      return nodeNone;
     }
     // Return a parser object.
     return {
