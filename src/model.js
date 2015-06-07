@@ -1392,7 +1392,7 @@ var Model = (function () {
         n.args.unshift(nodeMinusOne);
         return n;
       }
-      return multiplyNode([nodeMinusOne, n]);
+      return unaryNode(Model.SUB, [n]);
     }
     //
     function isAdditive(t) {
