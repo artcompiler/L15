@@ -230,6 +230,7 @@ var Model = (function () {
     UNDERSET: "underset",
     OVERLINE: "overline",
     DEGREE: "degree",
+    BACKSLASH: "backslash",
     NONE: "none",
   };
 
@@ -481,6 +482,7 @@ var Model = (function () {
     var TK_OVERLINE = 0x128;
     var TK_OVERSET = 0x129;
     var TK_UNDERSET = 0x12A;
+    var TK_BACKSLASH = 0x12B;
     var T0 = TK_NONE, T1 = TK_NONE;
     // Define mapping from token to operator
     var tokenToOperator = {};
@@ -534,6 +536,7 @@ var Model = (function () {
     tokenToOperator[TK_OVERLINE] = OpStr.OVERLINE;
     tokenToOperator[TK_OVERSET] = OpStr.OVERSET;
     tokenToOperator[TK_UNDERSET] = OpStr.UNDERSET;
+    tokenToOperator[TK_BACKSLASH] = OpStr.BACKSLASH;
 
     function newNode(op, args) {
       return {
@@ -1396,7 +1399,7 @@ var Model = (function () {
     }
     //
     function isAdditive(t) {
-      return t === TK_ADD || t === TK_SUB || t === TK_PM;
+      return t === TK_ADD || t === TK_SUB || t === TK_PM || t === TK_BACKSLASH;
     }
     // Parse 'a + b'
     function additiveExpr() {
@@ -1406,6 +1409,9 @@ var Model = (function () {
         next();
         var expr2 = multiplicativeExpr();
         switch(t) {
+        case TK_BACKSLASH:
+          expr = binaryNode(Model.BACKSLASH, [expr, expr2]);
+          break;
         case TK_PM:
           expr = binaryNode(Model.PM, [expr, expr2]);
           break;
@@ -1586,6 +1592,7 @@ var Model = (function () {
         "\\overline": TK_OVERLINE,
         "\\overset": TK_OVERSET,
         "\\underset": TK_UNDERSET,
+        "\\backslash": TK_BACKSLASH,
       };
       var identifiers = keys(env);
       function isAlphaCharCode(c) {
