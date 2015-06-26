@@ -1106,11 +1106,11 @@ var Model = (function () {
       switch (t = hd()) {
       case TK_ADD:
         next();
-        expr = postfixExpr();
+        expr = unaryExpr();
         break;
       case TK_SUB:
         next();
-        expr = negate(postfixExpr());
+        expr = negate(unaryExpr());
         break;
       case TK_PM:
         next();
