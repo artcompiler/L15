@@ -97,6 +97,7 @@ var Model = (function () {
   Assert.messages[1006] = "Unexpected expression: %1";
   Assert.messages[1007] = "Unexpected character: '%1' in '%2'.";
   Assert.messages[1008] = "The same character '%1' is being used as a thousands and decimal separators.";
+  Assert.messages[1009] = "Missing argument for '%1' command.";
   var message = Assert.message;
 
   // Create a model from a node object or expression string
@@ -1785,6 +1786,7 @@ var Model = (function () {
             }
             c = src.charCodeAt(curIndex++);
           }
+          assert(lexeme !== "", message(1009, ["\\text"]));
           if (Model.option("ignoreText")) {
             tk = null;   // treat as whitespace
           } else {
