@@ -918,7 +918,6 @@ var Model = (function () {
           args.push(primaryExpr());
         }
         args.push(commaExpr());
-        // Finish the log function
         return newNode(tokenToOperator[tk], args);
         break;
       case TK_EXISTS:
@@ -1432,23 +1431,13 @@ var Model = (function () {
     }
     // Parse 'x < y'
     function relationalExpr() {
-      var t = hd();
-      if (isRelational(t)) {
-        // Leading '=' so synthesize a variable.
-        var expr = newNode(Model.VAR, ["_"]);
-      } else {
-        var expr = additiveExpr();
-      }
+      var t;
+      var expr = additiveExpr();
       var args = [];
       while (isRelational(t = hd())) {
         // x < y < z -> [x < y, y < z]
         next();
-        if (hd() === 0) {
-          // Trailing '=' so synthesize a variable.
-          var expr2 = newNode(Model.VAR, ["_"]);
-        } else {
-          var expr2 = additiveExpr();
-        }
+        var expr2 = additiveExpr();
         expr = newNode(tokenToOperator[t], [expr, expr2]);
         args.push(expr);
         expr = expr2;
@@ -1663,13 +1652,17 @@ var Model = (function () {
             lexeme += String.fromCharCode(c);
             return TK_VAR;
           case 60:  // left angle
+            lexeme += String.fromCharCode(c);
             if (src.charCodeAt(curIndex) === 61) { // equals
+              lexeme += String.fromCharCode(61);
               curIndex++;
               return TK_LE;
             }
             return TK_LT;
           case 62:  // right angle
+            lexeme += String.fromCharCode(c);
             if (src.charCodeAt(curIndex) === 61) { // equals
+              lexeme += String.fromCharCode(61);
               curIndex++;
               return TK_GE;
             }
