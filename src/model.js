@@ -1768,12 +1768,12 @@ var Model = (function () {
         } else if (tk === TK_TEXT) {
           var c = src.charCodeAt(curIndex++);
           // Skip whitespace before '{'
-          while (c !== "{".charCodeAt(0)) {
+          while (c && c !== "{".charCodeAt(0)) {
             c = src.charCodeAt(curIndex++);
           }
           lexeme = "";
           var c = src.charCodeAt(curIndex++);
-          while (c !== "}".charCodeAt(0)) {
+          while (c && c !== "}".charCodeAt(0)) {
             var ch = String.fromCharCode(c);
             if (ch === "&" && src.substring(curIndex).indexOf("nbsp;") === 0) {
               // Skip &nbsp;
