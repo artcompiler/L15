@@ -1392,7 +1392,7 @@ var Model = (function () {
           return numberNode("-" + n.args[0]);
         }
       } else if (n.op === Model.MUL) {
-        n.args.unshift(nodeMinusOne);
+        n.args.unshift(negate(n.args.shift()));
         return n;
       }
       return unaryNode(Model.SUB, [n]);
