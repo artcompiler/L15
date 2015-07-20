@@ -736,7 +736,7 @@ var Model = (function () {
       next(options);
     }
     // Begin parsing functions.
-    function primaryExpr () {
+    function primaryExpr() {
       var e;
       var tk;
       var op;
@@ -753,7 +753,7 @@ var Model = (function () {
         }
         e = newNode(Model.VAR, args);
         if (isChemCore()) {
-          if (hd() === TK_LEFTBRACE) {
+          if (hd() === TK_LEFTBRACE && lookahead() === TK_RIGHTBRACE) {
             // C_2{}^3 -> C_2^3
             eat(TK_LEFTBRACE);
             eat(TK_RIGHTBRACE);
