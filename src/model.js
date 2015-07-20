@@ -1274,7 +1274,7 @@ var Model = (function () {
           expr.isMixedFraction = true;
         } else if (!explicitOperator && args.length > 0 &&
                    isRepeatingDecimal([args[args.length-1], expr])) {
-          // 3.\overline{12} --> 3.0*(0.12, repeating)
+          // 3.\overline{12} --> 3.0+(0.12, repeating)
           // 0.3\overline{12} --> 0.3+0.1*(.12, repeating)
           var n0 = args.pop();
           var n1 = expr.args[0];
@@ -1285,6 +1285,8 @@ var Model = (function () {
             n1 = multiplyNode([n1, binaryNode(Model.POW, [numberNode("10"), numberNode("-" + decimalPlaces)])]);
           }
           expr = binaryNode(Model.ADD, [n0, n1]);
+          expr.numberFormat = "decimal";
+          expr.isRepeating = true;
         } else if (t === TK_MUL && args.length > 0 && explicitOperator &&
                    isScientific([args[args.length-1], expr])) {
           // 1.2 \times 10 ^ {-3}
