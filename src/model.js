@@ -232,6 +232,7 @@ var Model = (function () {
     OVERLINE: "overline",
     DEGREE: "degree",
     BACKSLASH: "backslash",
+    MATHBF: "mathbf",
     NONE: "none",
   };
 
@@ -484,6 +485,7 @@ var Model = (function () {
     var TK_OVERSET = 0x129;
     var TK_UNDERSET = 0x12A;
     var TK_BACKSLASH = 0x12B;
+    var TK_MATHBF = 0x12C;
     var T0 = TK_NONE, T1 = TK_NONE;
     // Define mapping from token to operator
     var tokenToOperator = {};
@@ -538,6 +540,7 @@ var Model = (function () {
     tokenToOperator[TK_OVERSET] = OpStr.OVERSET;
     tokenToOperator[TK_UNDERSET] = OpStr.UNDERSET;
     tokenToOperator[TK_BACKSLASH] = OpStr.BACKSLASH;
+    tokenToOperator[TK_MATHBF] = OpStr.MATHBF;
 
     function newNode(op, args) {
       return {
@@ -948,6 +951,11 @@ var Model = (function () {
         expr2.args.push(newNode(tokenToOperator[tk], [expr1]));
         return expr2;
         break;
+      case TK_MATHBF:
+        // Erase this token.
+        next();
+        var expr1 = braceExpr();
+        return expr1;
       default:
         assert(false, message(1006, [lexeme()]));
         e = void 0;
@@ -1585,6 +1593,7 @@ var Model = (function () {
         "\\overset": TK_OVERSET,
         "\\underset": TK_UNDERSET,
         "\\backslash": TK_BACKSLASH,
+        "\\mathbf": TK_MATHBF,
       };
       var identifiers = keys(env);
       function isAlphaCharCode(c) {
