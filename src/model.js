@@ -1001,9 +1001,16 @@ var Model = (function () {
     }
     // Parse '{ expr }'
     function braceExpr() {
+      var e;
       eat(TK_LEFTBRACE);
-      var e = commaExpr();
+      if (hd() === TK_RIGHTBRACE) {
+        e = newNode(Model.COMMA, []);
+      } else {
+        e = commaExpr();
+      }
       eat(TK_RIGHTBRACE);
+      e.lbrk = TK_LEFTBRACE;
+      e.rbrk = TK_RIGHTBRACE;
       return e;
     }
     // Parse '[ expr ]'
@@ -1532,6 +1539,12 @@ var Model = (function () {
       start();
       if (hd()) {
         var n = commaExpr();
+        if (n.op !== Model.COMMA &&
+            n.lbrk === TK_LEFTBRACE &&
+            n.rbrk === TK_RIGHTBRACE) {
+          // Top level {..} is a set, so make a comma expr.
+          n = newNode(Model.COMMA, [n]);
+        }
         assert(!hd(), message(1003, [scan.pos(), scan.lexeme()]));
         return n;
       }

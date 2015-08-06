@@ -149,7 +149,7 @@ var Ast = (function () {
   };
 
   // Get a node from the node pool.
-  Ast.prototype.node = function node(nid) {
+  Ast.node = Ast.prototype.node = function node(nid) {
     var n = JSON.parse(JSON.stringify(nodePool[nid]));
     for (var i=0; i < n.args.length; i++) {
       // If string, then not a nid.
