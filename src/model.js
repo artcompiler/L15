@@ -612,7 +612,7 @@ var Model = (function () {
       var n2 = "";
       var i, ch;
       var lastSeparatorIndex, lastSignificantIndex;
-      var hasSeparator = false;
+      var separatorCount = 0;
       var numberFormat = "integer";
       var hasLeadingZero, hasTrailingZero;
       if (n0 === ".") {
@@ -620,11 +620,13 @@ var Model = (function () {
       }
       for (i = 0; i < n1.length; i++) {
         if (matchThousandsSeparator(ch = n1.charAt(i))) {
-          if (hasSeparator && lastSeparatorIndex !== i - 4) {
+          if (separatorCount && lastSeparatorIndex !== i - 4 ||
+              !separatorCount && i > 4) {
             assert(false, message(1005));
           }
           lastSeparatorIndex = i;
-          hasSeparator = true;
+          separatorCount++;
+          // We erase separators so 1,000 and 1000 are equivLiteral.
         } else {
           if (ch === getDecimalSeparator()) {
             ch = '.';  // Convert to character the BigDecimal agrees with.
@@ -632,10 +634,9 @@ var Model = (function () {
               assert(false, message(1007, [getDecimalSeparator(), n2 + getDecimalSeparator()]));
             }
             numberFormat = "decimal";
-            if (hasSeparator && lastSeparatorIndex !== i - 4) {
+            if (separatorCount && lastSeparatorIndex !== i - 4) {
               assert(false, message(1005));
             }
-            hasSeparator = false;  // No longer need to worry about thousands separators.
             if (n2 === "0") {
               hasLeadingZero = true;
             }
@@ -643,13 +644,15 @@ var Model = (function () {
             lastSignificantIndex = i - 1;
           } else if (numberFormat === "decimal") {
             if (ch !== "0") {
-              lastSignificantIndex = i;
+              lastSignificantIndex = i - separatorCount;
             }
           }
           n2 += ch;
         }
       }
-      if (hasSeparator && lastSeparatorIndex !== i - 4) {
+      if (numberFormat !== "decimal" && lastSeparatorIndex && lastSeparatorIndex !== i - 4) {
+        // If we haven't seen a decimal separator, then make sure the last thousands
+        // separator is in the right place.
         assert(false, message(1005));
       }
       if (lastSignificantIndex !== undefined) {
@@ -670,7 +673,7 @@ var Model = (function () {
       return {
         op: Model.NUM,
         args: [String(n2)],
-        hasThousandsSeparator: hasSeparator,
+        hasThousandsSeparator: separatorCount !== 0,
         numberFormat: numberFormat,
         hasLeadingZero: hasLeadingZero,
         hasTrailingZero: hasTrailingZero,
