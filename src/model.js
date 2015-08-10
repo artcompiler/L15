@@ -1664,9 +1664,15 @@ var Model = (function () {
             return TK_NEWCOL;
           case 92:  // backslash
             lexeme += String.fromCharCode(c);
-            if (src.charCodeAt(curIndex) === 92) {
+            switch (src.charCodeAt(curIndex)) {
+            case 92:
               curIndex++;
               return TK_NEWROW;   // double backslash = new row
+            case 123: // left brace
+            case 124: // vertical bar
+            case 125: // right brace
+              // Erase backslash.
+              return src.charCodeAt(curIndex++);
             }
             var tk = latex();
             if (tk !== null) {
