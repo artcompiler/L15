@@ -2,6 +2,15 @@
 
 The contents of this file specifies the syntax of L15.
 
+```
+PrimaryExpr :=
+    Variable
+    Number
+    ParenExpr
+    BraceExpr
+    BracketExpr
+```
+
 ### Operators
 
     "+",
