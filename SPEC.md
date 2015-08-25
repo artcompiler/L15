@@ -133,3 +133,20 @@ InfixExpr :=
     DIV
 ```
 
+CommaExpr
+    EqualExpr
+    CommaExpr EqualExpr
+
+EqualExpr
+    **=**
+    EqualExpr **=** AdditiveExpr
+
+
+```
+```
+
+```
+```
+
+```
+```
