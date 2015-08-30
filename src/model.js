@@ -490,6 +490,7 @@ var Model = (function () {
     var TK_MATHBF = 0x12C;
     var TK_NE = 0x12D;
     var TK_APPROX = 0x12E;
+    var TK_ABS = 0x12F;
     var T0 = TK_NONE, T1 = TK_NONE;
     // Define mapping from token to operator
     var tokenToOperator = {};
@@ -797,6 +798,11 @@ var Model = (function () {
         break;
       case TK_VERTICALBAR:
         e = absExpr();
+        break;
+      case TK_ABS:
+        next();
+        var e = additiveExpr();
+        return unaryNode(Model.ABS, [e]);
         break;
       case TK_FRAC:
         next();
@@ -1640,6 +1646,7 @@ var Model = (function () {
         "\\underset": TK_UNDERSET,
         "\\backslash": TK_BACKSLASH,
         "\\mathbf": TK_MATHBF,
+        "\\abs": TK_ABS,
       };
       var identifiers = keys(env);
       function isAlphaCharCode(c) {
