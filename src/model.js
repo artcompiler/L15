@@ -235,7 +235,7 @@ var Model = (function () {
     DEGREE: "degree",
     BACKSLASH: "backslash",
     MATHBF: "mathbf",
-    NONE: "none",
+    NONE: "none"
   };
 
   forEach(keys(OpStr), function (v, i) {
@@ -566,7 +566,7 @@ var Model = (function () {
         } else {
           // If the character matches the last separator or, if not, last is undefiend
           // and character is in the provided list, return the character.
-          if (ch === last || !last && separators.indexOf(ch) >= 0) {
+          if (ch === last || !last && indexOf(separators, ch) >= 0) {
             return ch;
           } else {
             return "";
@@ -586,7 +586,7 @@ var Model = (function () {
         assert(decimalSeparator.length === 1, message(1002));
         var separator = decimalSeparator;
         if (thousandsSeparators instanceof Array &&
-            thousandsSeparators.indexOf(separator) >= 0) {
+            indexOf(thousandsSeparators, separator) >= 0) {
           // There is a conflict between the decimal separator and the
           // thousands separator.
           assert(false, message(2008, [separator]));
@@ -594,7 +594,7 @@ var Model = (function () {
         }
         return separator;
       } 
-      if (thousandsSeparators instanceof Array && thousandsSeparators.indexOf('.') >= 0) {
+      if (thousandsSeparators instanceof Array && indexOf(thousandsSeparators, '.') >= 0) {
         // Period is used as a thousands separator, so cannot be used as a
         // decimal separator.
         assert(false, message(2008));
@@ -677,7 +677,7 @@ var Model = (function () {
         hasThousandsSeparator: separatorCount !== 0,
         numberFormat: numberFormat,
         hasLeadingZero: hasLeadingZero,
-        hasTrailingZero: hasTrailingZero,
+        hasTrailingZero: hasTrailingZero
       }
     }
     // Construct a multiply node.
@@ -790,7 +790,7 @@ var Model = (function () {
         var tbl = matrixExpr();
         eat(TK_END);
         braceExpr();
-        if (figure.args[0].indexOf("matrix") >= 0) {
+        if (indexOf(figure.args[0], "matrix") >= 0) {
           e = newNode(Model.MATRIX, [tbl]);
         } else {
           assert(false, "Unrecognized LaTeX name");
@@ -1311,8 +1311,8 @@ var Model = (function () {
           var n1 = expr.args[0];
           n1 = numberNode("." + n1.args[0]);
           n1.isRepeating = true;
-          if (n0.args[0].indexOf(".") >= 0) {
-            var decimalPlaces = n0.args[0].length - n0.args[0].indexOf(".")- 1;
+          if (indexOf(n0.args[0], ".") >= 0) {
+            var decimalPlaces = n0.args[0].length - indexOf(n0.args[0], ".")- 1;
             n1 = multiplyNode([n1, binaryNode(Model.POW, [numberNode("10"), numberNode("-" + decimalPlaces)])]);
           }
           expr = binaryNode(Model.ADD, [n0, n1]);
@@ -1381,7 +1381,7 @@ var Model = (function () {
       if (args.length === 1) {
         // 1.2, 10^2
         if (args[0].op === Model.NUM &&
-            (args[0].args[0].length === 1 || args[0].args[0].indexOf(getDecimalSeparator()) === 1)) {
+            (args[0].args[0].length === 1 || indexOf(args[0].args[0], getDecimalSeparator()) === 1)) {
           return true;
         } else if (args[0].op === Model.POW &&
                    args[0].args[0].op === Model.NUM && args[0].args[0].args[0] === "10" &&
@@ -1394,7 +1394,7 @@ var Model = (function () {
         var a = args[0];
         var e = args[1];
         if (a.op === Model.NUM &&
-            (a.args[0].length === 1 || a.args[0].indexOf(getDecimalSeparator()) === 1) &&
+            (a.args[0].length === 1 || indexOf(a.args[0], getDecimalSeparator()) === 1) &&
             e.op === Model.POW &&
             e.args[0].op === Model.NUM && e.args[0].args[0] === "10" &&
             e.args[1].numberFormat === "integer") {
@@ -1638,7 +1638,7 @@ var Model = (function () {
         "\\underset": TK_UNDERSET,
         "\\backslash": TK_BACKSLASH,
         "\\mathbf": TK_MATHBF,
-        "\\abs": TK_ABS,
+        "\\abs": TK_ABS
       };
       var identifiers = keys(env);
       function isAlphaCharCode(c) {
@@ -1663,7 +1663,7 @@ var Model = (function () {
           case 13:  // carriage return
             continue;
           case 38:  // ampersand (new column or entity)
-            if (src.substring(curIndex).indexOf("nbsp;") === 0) {
+            if (indexOf(src.substring(curIndex), "nbsp;") === 0) {
               // Skip &nbsp;
               curIndex += 5;
               continue;
@@ -1782,7 +1782,7 @@ var Model = (function () {
           var ch = String.fromCharCode(c);
           var prefix = lexeme + ch;
           var match = some(identifiers, function (u) {
-            return u.indexOf(prefix) === 0;
+            return indexOf(u, prefix) === 0;
           });
           if (!match) {
             break;
@@ -1807,11 +1807,11 @@ var Model = (function () {
           lexeme = String.fromCharCode(c);
         } else if (c === '%'.charCodeAt(0)) {
           lexeme += String.fromCharCode(c);
-        } else if ([' '.charCodeAt(0),
+        } else if (indexOf([' '.charCodeAt(0),
                     ':'.charCodeAt(0),
                     ';'.charCodeAt(0),
                     ','.charCodeAt(0),
-                    '!'.charCodeAt(0)].indexOf(c) >= 0) {
+                    '!'.charCodeAt(0)], c) >= 0) {
           lexeme = "\\ ";
         } else {
           while (isAlphaCharCode(c)) {
@@ -1833,7 +1833,7 @@ var Model = (function () {
           var c = src.charCodeAt(curIndex++);
           while (c && c !== "}".charCodeAt(0)) {
             var ch = String.fromCharCode(c);
-            if (ch === "&" && src.substring(curIndex).indexOf("nbsp;") === 0) {
+            if (ch === "&" && indexOf(src.substring(curIndex), "nbsp;") === 0) {
               // Skip &nbsp;
               curIndex += 5;
             } else if (ch === " " || ch === "\t") {
@@ -1856,7 +1856,7 @@ var Model = (function () {
       return {
         start : start ,
         lexeme : function () { return lexeme } ,
-        pos: function() { return curIndex; },
+        pos: function() { return curIndex; }
       }
     }
   }
