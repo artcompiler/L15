@@ -244,7 +244,7 @@ var create = function create(o) {
 };
 
 // From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON
-if (!window.JSON) {
+if (typeof window === "object" && !window.JSON) {
   window.JSON = {
     parse: function(sJSON) { return eval('(' + sJSON + ')'); },
     stringify: (function () {
